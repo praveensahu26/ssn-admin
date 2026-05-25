@@ -1,0 +1,12 @@
+# Ignore build outputs
+dist
+build
+coverage
+
+# Ignore dependencies
+node_modules
+
+# Ignore configuration files
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
