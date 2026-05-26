@@ -5,11 +5,15 @@ import { ROUTES } from '@/config/routes';
 import ProtectedRoute from './ProtectedRoute';
 
 const DashboardPage = lazy(() => import('@/pages/dashboard/Dashboard'));
+const LoginPage = lazy(() => import('@/pages/login/LoginPage'));
+const ForgotPasswordPage = lazy(() => import('@/pages/forgot-password/ForgotPasswordPage'));
+const VerifyEmailPage = lazy(() => import('@/pages/verify-email/VerifyEmailPage'));
+const ResetPasswordPage = lazy(() => import('@/pages/reset-password/ResetPasswordPage'));
 
 function RouteFallback() {
   return (
     <div role="status" aria-live="polite" className="flex min-h-screen items-center justify-center">
-      <Spinner size={28} />
+      <Spinner size={30} />
     </div>
   );
 }
@@ -20,13 +24,16 @@ const AppRouter = () => {
       <Suspense fallback={<RouteFallback />}>
         <Routes>
           <Route path={ROUTES.root} element={<Navigate to={ROUTES.dashboard} replace />} />
-          <Route path={ROUTES.login} element={<div>Login Page Mock</div>} />
+          <Route path={ROUTES.login} element={<LoginPage />} />
+          <Route path={ROUTES.forgotPassword} element={<ForgotPasswordPage />} />
+          <Route path={ROUTES.verifyEmail} element={<VerifyEmailPage />} />
+          <Route path={ROUTES.resetPassword} element={<ResetPasswordPage />} />
 
           <Route element={<ProtectedRoute />}>
             <Route path={ROUTES.dashboard} element={<DashboardPage />} />
           </Route>
 
-          <Route path={ROUTES.notFound} element={<div className="p-8">404 - Page Not Found</div>} />
+          <Route path={ROUTES.notFound} element={<div className="p-8 flex items-center justify-center h-screen text-3xl font-bold text-black">404 - Page Not Found</div>} />
         </Routes>
       </Suspense>
     </BrowserRouter>

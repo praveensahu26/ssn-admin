@@ -57,11 +57,6 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
           An unexpected error occurred. You can try again, and if the issue
           persists, reload the page.
         </p>
-        {import.meta.env.DEV ? (
-          <pre className="bg-surface-muted text-text-muted max-w-xl overflow-auto rounded-md p-3 text-left text-xs">
-            {error.message}
-          </pre>
-        ) : null}
         <div className="flex gap-3">
           <Button onClick={this.reset}>Try again</Button>
           <Button variant="outline" onClick={this.reload}>

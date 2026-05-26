@@ -5,7 +5,7 @@ interface SpinnerProps {
   className?: string;
 }
 
-export function Spinner({ size = 24, className }: SpinnerProps) {
+export function Spinner({ size = 30, className }: SpinnerProps) {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
