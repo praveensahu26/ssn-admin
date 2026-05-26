@@ -30,8 +30,8 @@ const LoginPage: React.FC = () => {
       keepLoggedIn: false,
     },
     validationSchema: LoginSchema,
-    onSubmit: (values) => {
-      console.log('Login Submit:', values);
+    onSubmit: () => {
+
       // Dummy success logic - just navigate to dashboard since no API integration is requested
       navigate(ROUTES.dashboard);
     },
