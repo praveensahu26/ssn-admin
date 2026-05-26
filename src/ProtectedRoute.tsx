@@ -17,7 +17,7 @@ export function ProtectedRoute({
   const { isAuthenticated, user } = useAuthData();
   const location = useLocation();
 
-  if (!isAuthenticated) {
+  if (isAuthenticated) {
     return <Navigate to={redirectTo} state={{ from: location }} replace />;
   }
 
