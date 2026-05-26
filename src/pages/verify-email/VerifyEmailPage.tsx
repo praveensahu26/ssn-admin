@@ -77,7 +77,7 @@ const VerifyEmailPage: React.FC = () => {
       return;
     }
 
-    console.log('OTP Code Verified:', code);
+
     toast.success('Email verified successfully!');
     // Navigate to reset password
     navigate(ROUTES.resetPassword);

@@ -31,8 +31,8 @@ const ResetPasswordPage: React.FC = () => {
       confirmPassword: '',
     },
     validationSchema: ResetPasswordSchema,
-    onSubmit: (values) => {
-      console.log('Reset Password Submit:', values);
+    onSubmit: () => {
+
       toast.success('Password has been reset successfully!');
       // Dummy success logic - just navigate to login since no API integration is requested
       navigate(ROUTES.login);

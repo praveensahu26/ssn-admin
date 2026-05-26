@@ -20,8 +20,8 @@ const ForgotPasswordPage: React.FC = () => {
       email: '',
     },
     validationSchema: ForgotPasswordSchema,
-    onSubmit: (values) => {
-      console.log('Forgot Password Submit:', values);
+    onSubmit: () => {
+
       // Dummy success logic - just navigate to verify email since no API integration is requested
       navigate(ROUTES.verifyEmail);
     },
