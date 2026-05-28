@@ -5,6 +5,8 @@ export const ROUTES = {
   verifyEmail: '/verify-email',
   resetPassword: '/reset-password',
   dashboard: '/dashboard',
+  users: '/users',
+  reporters: '/reporters',
   notFound: '*',
 } as const;
 

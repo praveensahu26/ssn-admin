@@ -22,7 +22,7 @@ export const StatCard: React.FC<StatCardProps> = ({
   className = '',
 }) => {
   return (
-    <div className={`bg-white w-full h-[206px] border border-[#DCE5EF] rounded-xl p-6 shadow-card flex flex-col justify-between ${className}`}>
+    <div className={`bg-white w-full h-[206px] border border-[#DCE5EF] rounded-xl p-4 shadow-card flex flex-col justify-between ${className}`}>
       {/* Top Header */}
       <div className="flex justify-between items-start mb-4">
         <h3 className="text-subheading font-medium text-text-primary font-poppins">{title}</h3>
@@ -32,7 +32,7 @@ export const StatCard: React.FC<StatCardProps> = ({
       </div>
 
       {/* Main Content (Value & Chart) */}
-      <div className="flex justify-between items-center mb-3">
+      <div className="flex justify-between items-start mb-3">
         <div className="flex items-baseline">
           <span className="text-[40px] font-semibold text-text-primary tracking-tight font-poppins">{value}</span>
           {valueSuffix && (
