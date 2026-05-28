@@ -89,7 +89,7 @@ const CalendarModal: React.FC<CalendarModalProps> = ({
 }) => {
   const today = new Date();
 
-  const [selectedOption, setSelectedOption] = useState<QuickOption>('Last 7 days');
+  const [selectedOption, setSelectedOption] = useState<QuickOption>('Custom');
   const [viewYear, setViewYear] = useState<number>(today.getFullYear());
   const [viewMonth, setViewMonth] = useState<number>(today.getMonth());
   const [rangeStart, setRangeStart] = useState<Date | null>(null);
@@ -97,6 +97,13 @@ const CalendarModal: React.FC<CalendarModalProps> = ({
   const [hoverDate, setHoverDate] = useState<Date | null>(null);
 
   const modalRef = useRef<HTMLDivElement>(null);
+
+  // Reset to Custom option when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      setSelectedOption('Custom');
+    }
+  }, [isOpen]);
 
   // Close on outside click
   useEffect(() => {

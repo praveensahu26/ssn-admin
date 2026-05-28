@@ -202,7 +202,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
         </header>
 
         {/* Inner Content Area */}
-        <main className="p-8 min-h-[calc(100vh-90px)] bg-[#F4F7FC]">
+        <main className="p-8 min-h-[calc(100vh-70px)] bg-[#F4F7FC]">
           {children}
         </main>
       </div>
