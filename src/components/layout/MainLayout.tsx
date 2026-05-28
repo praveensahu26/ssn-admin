@@ -41,13 +41,13 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
     },
     {
       name: 'Users',
-      path: '/users',
+      path: ROUTES.users,
       activeIcon: '/icons/sidebar/usersActive.svg',
       inactiveIcon: '/icons/sidebar/usersInactive.svg',
     },
     {
       name: 'Reporters',
-      path: '/reporters',
+      path: ROUTES.reporters,
       activeIcon: '/icons/sidebar/reportersActive.svg',
       inactiveIcon: '/icons/sidebar/reportersInactive.svg',
     },
@@ -97,7 +97,17 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
               return (
                 <button
                   key={item.name}
-                  onClick={() => navigate(item.path === ROUTES.dashboard ? ROUTES.dashboard : '#')}
+                  onClick={() => {
+                    if (
+                      item.path === ROUTES.dashboard ||
+                      item.path === ROUTES.users ||
+                      item.path === ROUTES.reporters
+                    ) {
+                      navigate(item.path);
+                    } else {
+                      navigate('#');
+                    }
+                  }}
                   className={`flex items-center gap-2 px-4 py-3.5 rounded-xl  font-poppins font-medium text-md-custom w-full text-left ${isActive
                     ? 'bg-btn-primary text-white'
                     : 'text-text-secondary'
@@ -202,7 +212,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
         </header>
 
         {/* Inner Content Area */}
-        <main className="p-8 min-h-[calc(100vh-70px)] bg-[#F4F7FC]">
+        <main className="p-8 pt-4 min-h-[calc(100vh-70px)] bg-[#F4F7FC]">
           {children}
         </main>
       </div>
