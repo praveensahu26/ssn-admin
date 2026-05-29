@@ -16,6 +16,10 @@ const DotsIcon = () => <img src="/icons/table/dots.svg" alt="more" />;
 const RestoreIcon = () => <img src="/icons/table/restore.svg" alt="restore" />;
 const CheckIcon = (props: React.ComponentProps<typeof Check>) => <Check className="w-5 h-5" {...props} />;
 
+const MenuIcon = ({ src, alt }: { src: string; alt: string }) => (
+  <img src={src} alt={alt} className="h-5 w-5 object-contain" />
+);
+
 
 
 interface AccountsTemplateProps {
@@ -332,7 +336,29 @@ export const AccountsTemplate: React.FC<AccountsTemplateProps> = ({ role }) => {
             detailContent: renderReportCount,
           },
           { icon: DeleteIcon, onClick: handleDelete, tooltip: 'Delete' },
-          { icon: DotsIcon, onClick: () => { }, tooltip: 'More Options' },
+          {
+            icon: DotsIcon,
+            onClick: () => { },
+            tooltip: 'More Options',
+            menuItems: [
+              {
+                label: 'View Profile & Activities',
+                icon: <MenuIcon src="/icons/table/view.svg" alt="view" />,
+              },
+              {
+                label: 'Issue Warning',
+                icon: <MenuIcon src="/icons/table/warning.svg" alt="warning" />,
+              },
+              {
+                label: 'Block User',
+                icon: <MenuIcon src="/icons/table/remove.svg" alt="block" />,
+              },
+              {
+                label: 'Dismiss Report',
+                icon: <MenuIcon src="/icons/table/dismis.svg" alt="dismiss" />,
+              },
+            ],
+          },
         ];
         return (
           <DataTable
