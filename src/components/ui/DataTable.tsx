@@ -16,6 +16,11 @@ export interface ActionConfig<T> {
   tooltip?: string;
   detailTitle?: (row: T) => string;
   detailContent?: (row: T) => React.ReactNode;
+  menuItems?: {
+    label: string;
+    onClick?: (row: T) => void;
+    icon?: React.ReactNode;
+  }[];
 }
 
 export interface BulkActionConfig {
@@ -103,7 +108,7 @@ export function DataTable<T extends { id: string; name?: string; profilePicture?
   };
 
   return (
-    <div className="w-full bg-white border border-[#DCE5EF] rounded-xl shadow-card overflow-hidden font-poppins mb-2">
+    <div className="w-full bg-white border border-[#DCE5EF] rounded-xl shadow-card overflow-visible font-poppins mb-2">
       {/* Top Header Section */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 border-b border-[#DCE5EF]">
         <div className="flex items-center gap-3">
@@ -245,6 +250,7 @@ export function DataTable<T extends { id: string; name?: string; profilePicture?
                           {actions.map((act, aIdx) => {
                             const IconComp = act.icon;
                             const hasDetail = Boolean(act.detailContent);
+                            const hasMenu = Boolean(act.menuItems?.length);
                             const isDetailOpen =
                               activeDetail?.rowId === row.id && activeDetail.actionIndex === aIdx;
                             return (
@@ -252,12 +258,12 @@ export function DataTable<T extends { id: string; name?: string; profilePicture?
                                 key={aIdx}
                                 className="relative inline-flex items-center justify-center"
                                 onMouseEnter={() => {
-                                  if (hasDetail) {
+                                  if (hasDetail && !hasMenu) {
                                     setActiveDetail({ rowId: row.id, actionIndex: aIdx });
                                   }
                                 }}
                                 onMouseLeave={() => {
-                                  if (hasDetail) {
+                                  if (hasDetail && !hasMenu) {
                                     setActiveDetail(null);
                                   }
                                 }}
@@ -265,25 +271,53 @@ export function DataTable<T extends { id: string; name?: string; profilePicture?
                                 <button
                                   onClick={() => {
                                     act.onClick(row);
+                                    if (hasMenu) {
+                                      setActiveDetail((current) =>
+                                        current?.rowId === row.id && current.actionIndex === aIdx
+                                          ? null
+                                          : { rowId: row.id, actionIndex: aIdx }
+                                      );
+                                    } else {
+                                      setActiveDetail(null);
+                                    }
                                   }}
                                   onFocus={() => {
-                                    if (hasDetail) {
+                                    if (hasDetail && !hasMenu) {
                                       setActiveDetail({ rowId: row.id, actionIndex: aIdx });
                                     }
                                   }}
                                   onBlur={() => {
-                                    if (hasDetail) {
+                                    if (hasDetail && !hasMenu) {
                                       setActiveDetail(null);
                                     }
                                   }}
                                   className={`inline-flex items-center justify-center  ${act.className || ''
                                     }`}
                                   title={act.tooltip}
-                                  aria-expanded={hasDetail ? isDetailOpen : undefined}
+                                  aria-expanded={hasDetail || hasMenu ? isDetailOpen : undefined}
                                 >
                                   <IconComp className="w-5 h-5 shrink-0" />
                                 </button>
-                                {hasDetail && isDetailOpen && (
+                                {hasMenu && isDetailOpen && (
+                                  <div className="absolute right-0 top-[34px] z-20 w-[300px] max-w-[calc(100vw-32px)] rounded-xl border border-[#DCE5EF] bg-white py-4 text-left shadow-card">
+                                    {act.menuItems?.map((item, itemIdx) => (
+                                      <button
+                                        key={itemIdx}
+                                        onClick={() => {
+                                          item.onClick?.(row);
+                                          setActiveDetail(null);
+                                        }}
+                                        className="flex w-full items-center gap-2 px-4 py-1 text-left text-md-custom font-medium leading-7 text-text-secondary"
+                                      >
+                                        <span className="flex h-5 w-5 shrink-0 items-center justify-center">
+                                          {item.icon}
+                                        </span>
+                                        <span>{item.label}</span>
+                                      </button>
+                                    ))}
+                                  </div>
+                                )}
+                                {hasDetail && !hasMenu && isDetailOpen && (
                                   <div className="absolute right-4 top-[42px] z-20 w-[365px] max-w-[calc(100vw-32px)] rounded-[14px] bg-[#303030] px-5 py-4 text-left text-white shadow-xl">
                                     <div className="flex items-start justify-between gap-4">
                                       <h3 className="text-lg-custom font-medium leading-6 text-white">
