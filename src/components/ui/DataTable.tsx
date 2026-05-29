@@ -14,6 +14,13 @@ export interface ActionConfig<T> {
   onClick: (row: T) => void;
   className?: string;
   tooltip?: string;
+  detailTitle?: (row: T) => string;
+  detailContent?: (row: T) => React.ReactNode;
+}
+
+export interface BulkActionConfig {
+  label: string;
+  onClick: (selectedIds: string[]) => void;
 }
 
 interface DataTableProps<T> {
@@ -22,6 +29,7 @@ interface DataTableProps<T> {
   data: T[];
   columns: ColumnConfig<T>[];
   actions?: ActionConfig<T>[];
+  bulkActions?: BulkActionConfig[];
   searchPlaceholder?: string;
   searchKeys: (keyof T)[];
   itemsPerPage?: number;
@@ -34,6 +42,7 @@ export function DataTable<T extends { id: string; name?: string; profilePicture?
   data,
   columns,
   actions = [],
+  bulkActions = [],
   searchPlaceholder = 'Search',
   searchKeys,
   itemsPerPage = 12,
@@ -42,6 +51,7 @@ export function DataTable<T extends { id: string; name?: string; profilePicture?
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [activeDetail, setActiveDetail] = useState<{ rowId: string; actionIndex: number } | null>(null);
 
   // Reset page when search query changes
   const handleSearchChange = (query: string) => {
@@ -114,6 +124,21 @@ export function DataTable<T extends { id: string; name?: string; profilePicture?
         </div>
       </div>
 
+      {/* Bulk Action Bar — visible only when rows are selected */}
+      {bulkActions.length > 0 && selectedIds.length > 0 && (
+        <div className="flex items-center justify-between gap-6 px-5 py-2.5 border-b border-[#DCE5EF]  flex-wrap">
+          {bulkActions.map((ba, i) => (
+            <button
+              key={i}
+              onClick={() => ba.onClick(selectedIds)}
+              className="text-md-custom font-medium text-btn-primary  whitespace-nowrap font-poppins"
+            >
+              {ba.label}
+            </button>
+          ))}
+        </div>
+      )}
+
       {/* Table Section */}
       <div className="w-full overflow-x-auto">
         <table className="w-full text-left border-collapse">
@@ -151,7 +176,10 @@ export function DataTable<T extends { id: string; name?: string; profilePicture?
                 </th>
               ))}
               {actions.length > 0 && (
-                <th className="py-4 px-6 text-text-secondary font-medium text-md-custom text-right w-24 min-w-[100px] whitespace-nowrap">
+                <th
+                  className="py-4 px-6 text-text-secondary font-medium text-md-custom text-left whitespace-nowrap"
+                  style={{ minWidth: `${Math.max(actions.length, 2) * 48 + 24}px` }}
+                >
                   Action
                 </th>
               )}
@@ -209,20 +237,66 @@ export function DataTable<T extends { id: string; name?: string; profilePicture?
 
                     {/* Action Column */}
                     {actions.length > 0 && (
-                      <td className="py-2 px-2 text-right w-24 min-w-[120px]">
-                        <div className="flex items-center justify-end gap-1 shrink-0">
+                      <td
+                        className="relative py-2 px-4 text-right whitespace-nowrap"
+                        style={{ minWidth: `${Math.max(actions.length, 2) * 48 + 24}px` }}
+                      >
+                        <div className="flex items-center justify-end gap-2">
                           {actions.map((act, aIdx) => {
                             const IconComp = act.icon;
+                            const hasDetail = Boolean(act.detailContent);
+                            const isDetailOpen =
+                              activeDetail?.rowId === row.id && activeDetail.actionIndex === aIdx;
                             return (
-                              <button
+                              <div
                                 key={aIdx}
-                                onClick={() => act.onClick(row)}
-                                className={`inline-flex items-center justify-center p-1 ${act.className || ''
-                                  }`}
-                                title={act.tooltip}
+                                className="relative inline-flex items-center justify-center"
+                                onMouseEnter={() => {
+                                  if (hasDetail) {
+                                    setActiveDetail({ rowId: row.id, actionIndex: aIdx });
+                                  }
+                                }}
+                                onMouseLeave={() => {
+                                  if (hasDetail) {
+                                    setActiveDetail(null);
+                                  }
+                                }}
                               >
-                                <IconComp className="w-5 h-5 shrink-0" />
-                              </button>
+                                <button
+                                  onClick={() => {
+                                    act.onClick(row);
+                                  }}
+                                  onFocus={() => {
+                                    if (hasDetail) {
+                                      setActiveDetail({ rowId: row.id, actionIndex: aIdx });
+                                    }
+                                  }}
+                                  onBlur={() => {
+                                    if (hasDetail) {
+                                      setActiveDetail(null);
+                                    }
+                                  }}
+                                  className={`inline-flex items-center justify-center  ${act.className || ''
+                                    }`}
+                                  title={act.tooltip}
+                                  aria-expanded={hasDetail ? isDetailOpen : undefined}
+                                >
+                                  <IconComp className="w-5 h-5 shrink-0" />
+                                </button>
+                                {hasDetail && isDetailOpen && (
+                                  <div className="absolute right-4 top-[42px] z-20 w-[365px] max-w-[calc(100vw-32px)] rounded-[14px] bg-[#303030] px-5 py-4 text-left text-white shadow-xl">
+                                    <div className="flex items-start justify-between gap-4">
+                                      <h3 className="text-lg-custom font-medium leading-6 text-white">
+                                        {act.detailTitle?.(row) ?? act.tooltip ?? 'Info'}
+                                      </h3>
+                                      <IconComp className="mt-0.5 w-5 h-5 shrink-0 opacity-80" />
+                                    </div>
+                                    <div className="mt-3 whitespace-normal text-md-custom font-medium leading-6 text-white">
+                                      {act.detailContent?.(row)}
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
                             );
                           })}
                         </div>

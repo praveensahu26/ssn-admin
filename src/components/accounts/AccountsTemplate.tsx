@@ -2,18 +2,18 @@ import React, { useState, useMemo } from 'react';
 import MainLayout from '@/components/layout/MainLayout';
 import { AccountsHeader, type AccountTab } from '@/components/accounts/AccountsHeader';
 import { AccountsOverview } from '@/components/accounts/AccountsOverview';
-import DataTable, { type ColumnConfig, type ActionConfig } from '@/components/ui/DataTable';
+import DataTable, { type ColumnConfig, type ActionConfig, type BulkActionConfig } from '@/components/ui/DataTable';
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore – dummyData is a plain JS module with no type declarations
 import { users as _initialUsers, reporters as _initialReporters } from '@/dummyData/dummyData';
 import { Check } from 'lucide-react';
 
 
-const EyeIcon = () => <img src="/icons/table/eye.svg" alt="view" className="w-[22px] h-[22px] object-contain" />;
-const DeleteIcon = () => <img src="/icons/table/delete.svg" alt="delete" className="w-[22px] h-[22px] object-contain" />;
-const InfoIcon = () => <img src="/icons/table/info.svg" alt="info" className="w-[22px] h-[22px] object-contain" />;
-const DotsIcon = () => <img src="/icons/table/dots.svg" alt="more" className="w-[22px] h-[22px] object-contain" />;
-const RestoreIcon = () => <img src="/icons/table/restore.svg" alt="restore" className="w-[22px] h-[22px] object-contain" />;
+const EyeIcon = () => <img src="/icons/table/eye.svg" alt="view" />;
+const DeleteIcon = () => <img src="/icons/table/delete.svg" alt="delete" />;
+const InfoIcon = () => <img src="/icons/table/info.svg" alt="info" />;
+const DotsIcon = () => <img src="/icons/table/dots.svg" alt="more" />;
+const RestoreIcon = () => <img src="/icons/table/restore.svg" alt="restore" />;
 const CheckIcon = (props: React.ComponentProps<typeof Check>) => <Check className="w-5 h-5" {...props} />;
 
 
@@ -36,6 +36,7 @@ interface BaseAccount {
     reason?: string;
   };
   isReported: boolean;
+  reportCount?: number;
   gender?: 'Male' | 'Female';
   journalistId?: string;
   verificationRequest?: string;
@@ -60,18 +61,21 @@ function getInitials(name: string): string {
   return mainPart.slice(0, 2).toUpperCase() || '??';
 }
 
-function renderUserCell(row: BaseAccount) {
+function UserCell({ row }: { row: BaseAccount }) {
+  const [imgError, setImgError] = React.useState(false);
   const initials = getInitials(row.name);
+  const showImage = row.profilePicture && !imgError;
   return (
     <div className="flex items-center gap-3">
-      {row.profilePicture ? (
+      {showImage ? (
         <img
           src={row.profilePicture}
           alt={row.name}
           className="w-10 h-10 rounded-full object-cover border border-[#F1F5F9] shrink-0"
+          onError={() => setImgError(true)}
         />
       ) : (
-        <div className="w-10 h-10 rounded-full bg-[#F1F5F9] border border-[#DCE5EF] flex items-center justify-center text-text-secondary font-medium text-md-custom shrink-0 font-poppins">
+        <div className="w-10 h-10 rounded-full bg-[#F1F5F9] border border-[#DCE5EF] flex items-center justify-center text-text-secondary font-medium text-base-custom shrink-0 font-poppins">
           {initials}
         </div>
       )}
@@ -81,6 +85,10 @@ function renderUserCell(row: BaseAccount) {
       </div>
     </div>
   );
+}
+
+function renderUserCell(row: BaseAccount) {
+  return <UserCell row={row} />;
 }
 
 function renderStatusBadge(status: string) {
@@ -207,10 +215,26 @@ export const AccountsTemplate: React.FC<AccountsTemplateProps> = ({ role }) => {
     );
   };
 
+  const renderReportCount = (row: BaseAccount) => (
+    <span>{row.reportCount ?? 0} reports</span>
+  );
+
+  const renderStatusReason = (fallback: string) => (row: BaseAccount) => (
+    <span>{row.status.reason || fallback}</span>
+  );
+
   // ─── Column set (user vs reporter) ─────────────────────────────────────────
 
   const cols = isReporter ? reporterDefaultColumns : defaultColumns;
   const labelSuffix = isReporter ? 'reporters' : 'users';
+
+  // ─── Shared bulk actions (UI only — handlers are no-ops for now) ────────────
+  const defaultBulkActions: BulkActionConfig[] = [
+    { label: 'Mark as Active',   onClick: () => {} },
+    { label: 'Mark as In-active', onClick: () => {} },
+    { label: 'Mark as Blocked',  onClick: () => {} },
+    { label: 'Mark as Suspend',  onClick: () => {} },
+  ];
 
   // ─── Tab Content ───────────────────────────────────────────────────────────
 
@@ -230,6 +254,7 @@ export const AccountsTemplate: React.FC<AccountsTemplateProps> = ({ role }) => {
               data={overviewList}
               columns={cols}
               actions={actions}
+              bulkActions={defaultBulkActions}
               searchKeys={['name', 'email', 'phoneNumber']}
               itemsPerPage={12}
             />
@@ -249,6 +274,7 @@ export const AccountsTemplate: React.FC<AccountsTemplateProps> = ({ role }) => {
             data={data}
             columns={cols}
             actions={actions}
+            bulkActions={defaultBulkActions}
             searchKeys={['name', 'email', 'phoneNumber']}
             itemsPerPage={12}
           />
@@ -267,6 +293,7 @@ export const AccountsTemplate: React.FC<AccountsTemplateProps> = ({ role }) => {
             data={data}
             columns={cols}
             actions={actions}
+            bulkActions={defaultBulkActions}
             searchKeys={['name', 'email', 'phoneNumber']}
             itemsPerPage={12}
           />
@@ -287,6 +314,7 @@ export const AccountsTemplate: React.FC<AccountsTemplateProps> = ({ role }) => {
             data={data}
             columns={cols}
             actions={actions}
+            bulkActions={defaultBulkActions}
             searchKeys={['name', 'email', 'phoneNumber']}
             itemsPerPage={12}
           />
@@ -294,11 +322,15 @@ export const AccountsTemplate: React.FC<AccountsTemplateProps> = ({ role }) => {
       }
 
       case 'reported': {
-        const data = currentList.filter(
-          (x) => x.status.value === 'active' || x.status.value === 'inactive' || x.status.value === 'in-active'
-        );
+        const data = currentList.filter((x) => x.isReported);
         const actions: ActionConfig<BaseAccount>[] = [
-          { icon: InfoIcon, onClick: () => { }, tooltip: 'Info' },
+          {
+            icon: InfoIcon,
+            onClick: () => { },
+            tooltip: 'Info',
+            detailTitle: () => 'Report Count',
+            detailContent: renderReportCount,
+          },
           { icon: DeleteIcon, onClick: handleDelete, tooltip: 'Delete' },
           { icon: DotsIcon, onClick: () => { }, tooltip: 'More Options' },
         ];
@@ -308,6 +340,7 @@ export const AccountsTemplate: React.FC<AccountsTemplateProps> = ({ role }) => {
             data={data}
             columns={cols}
             actions={actions}
+            bulkActions={defaultBulkActions}
             searchKeys={['name', 'email', 'phoneNumber']}
             itemsPerPage={12}
           />
@@ -317,7 +350,13 @@ export const AccountsTemplate: React.FC<AccountsTemplateProps> = ({ role }) => {
       case 'blocked': {
         const data = currentList.filter((x) => x.status.value === 'blocked');
         const actions: ActionConfig<BaseAccount>[] = [
-          { icon: InfoIcon, onClick: () => { }, tooltip: 'Info' },
+          {
+            icon: InfoIcon,
+            onClick: () => { },
+            tooltip: 'Info',
+            detailTitle: () => 'Reason for Blocked',
+            detailContent: renderStatusReason('No block reason provided.'),
+          },
           { icon: EyeIcon, onClick: () => { }, tooltip: 'View Profile' },
           { icon: DeleteIcon, onClick: handleDelete, tooltip: 'Delete' },
         ];
@@ -327,6 +366,7 @@ export const AccountsTemplate: React.FC<AccountsTemplateProps> = ({ role }) => {
             data={data}
             columns={cols}
             actions={actions}
+            bulkActions={defaultBulkActions}
             searchKeys={['name', 'email', 'phoneNumber']}
             itemsPerPage={12}
           />
@@ -336,7 +376,13 @@ export const AccountsTemplate: React.FC<AccountsTemplateProps> = ({ role }) => {
       case 'suspended': {
         const data = currentList.filter((x) => x.status.value === 'suspended');
         const actions: ActionConfig<BaseAccount>[] = [
-          { icon: InfoIcon, onClick: () => { }, tooltip: 'Info' },
+          {
+            icon: InfoIcon,
+            onClick: () => { },
+            tooltip: 'Info',
+            detailTitle: () => 'Reason for Suspended',
+            detailContent: renderStatusReason('No suspend reason provided.'),
+          },
           { icon: EyeIcon, onClick: () => { }, tooltip: 'View Profile' },
           { icon: RestoreIcon, onClick: handleRestore, tooltip: 'Restore' },
         ];
@@ -346,6 +392,7 @@ export const AccountsTemplate: React.FC<AccountsTemplateProps> = ({ role }) => {
             data={data}
             columns={cols}
             actions={actions}
+            bulkActions={defaultBulkActions}
             searchKeys={['name', 'email', 'phoneNumber']}
             itemsPerPage={12}
           />
@@ -364,6 +411,10 @@ export const AccountsTemplate: React.FC<AccountsTemplateProps> = ({ role }) => {
             data={currentList}
             columns={verificationColumns}
             actions={actions}
+            bulkActions={[
+              { label: 'Approve All', onClick: () => {} },
+              { label: 'Reject All',  onClick: () => {} },
+            ]}
             searchKeys={['name', 'email', 'phoneNumber', 'journalistId']}
             itemsPerPage={12}
           />
