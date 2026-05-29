@@ -94,7 +94,7 @@ export function ProfileDetailsLayout({ profile, onBack }: ProfileDetailsLayoutPr
             <img
               src={profilePicture}
               alt={profile.name}
-              className="-mt-20 h-[160px] w-[160px] rounded-full border-2 border-white object-cover z-100"
+              className="relative z-[1] -mt-20 h-[160px] w-[160px] rounded-full border-2 border-white object-cover"
             />
             <div className="mt-7">
               <div className="flex items-center gap-2">
