@@ -76,6 +76,14 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
     navigate(ROUTES.login);
   };
 
+  const isSidebarItemActive = (path: string) => {
+    if (path === ROUTES.dashboard) {
+      return location.pathname === path || location.pathname === ROUTES.root;
+    }
+
+    return location.pathname === path || location.pathname.startsWith(`${path}/`);
+  };
+
   return (
     <div className="flex min-h-screen bg-[#FFFFFF]">
       {/* Sidebar */}
@@ -93,7 +101,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
           {/* Navigation Links */}
           <nav className="flex flex-col gap-2">
             {menuItems.map((item) => {
-              const isActive = location.pathname === item.path || (item.path === ROUTES.dashboard && location.pathname === '/');
+              const isActive = isSidebarItemActive(item.path);
               return (
                 <button
                   key={item.name}

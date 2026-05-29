@@ -1,8 +1,10 @@
 import React, { useState, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import MainLayout from '@/components/layout/MainLayout';
 import { AccountsHeader, type AccountTab } from '@/components/accounts/AccountsHeader';
 import { AccountsOverview } from '@/components/accounts/AccountsOverview';
 import DataTable, { type ColumnConfig, type ActionConfig, type BulkActionConfig } from '@/components/ui/DataTable';
+import { getProfilePath } from '@/utils/profileRoutes';
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore – dummyData is a plain JS module with no type declarations
 import { users as _initialUsers, reporters as _initialReporters } from '@/dummyData/dummyData';
@@ -173,6 +175,7 @@ const verificationColumns: ColumnConfig<BaseAccount>[] = [
 // ─── Component ───────────────────────────────────────────────────────────────
 
 export const AccountsTemplate: React.FC<AccountsTemplateProps> = ({ role }) => {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<AccountTab>('overview');
 
   const [usersList, setUsersList] = useState<BaseAccount[]>(() =>
@@ -201,6 +204,10 @@ export const AccountsTemplate: React.FC<AccountsTemplateProps> = ({ role }) => {
 
   const handleDelete = (row: BaseAccount) => {
     setList((prev) => prev.filter((item) => item.id !== row.id));
+  };
+
+  const handleViewProfile = (row: BaseAccount) => {
+    navigate(getProfilePath(role, row.name));
   };
 
   const handleRestore = (row: BaseAccount) => {
@@ -246,7 +253,7 @@ export const AccountsTemplate: React.FC<AccountsTemplateProps> = ({ role }) => {
     switch (activeTab) {
       case 'overview': {
         const actions: ActionConfig<BaseAccount>[] = [
-          { icon: EyeIcon, onClick: () => { }, tooltip: 'View Profile' },
+          { icon: EyeIcon, onClick: handleViewProfile, tooltip: 'View Profile' },
           { icon: DeleteIcon, onClick: handleDelete, tooltip: 'Delete' },
         ];
         return (
@@ -269,7 +276,7 @@ export const AccountsTemplate: React.FC<AccountsTemplateProps> = ({ role }) => {
       case 'all': {
         const data = currentList.filter((x) => x.status.value !== 'suspended');
         const actions: ActionConfig<BaseAccount>[] = [
-          { icon: EyeIcon, onClick: () => { }, tooltip: 'View Profile' },
+          { icon: EyeIcon, onClick: handleViewProfile, tooltip: 'View Profile' },
           { icon: DeleteIcon, onClick: handleDelete, tooltip: 'Delete' },
         ];
         return (
@@ -288,7 +295,7 @@ export const AccountsTemplate: React.FC<AccountsTemplateProps> = ({ role }) => {
       case 'active': {
         const data = currentList.filter((x) => x.status.value === 'active');
         const actions: ActionConfig<BaseAccount>[] = [
-          { icon: EyeIcon, onClick: () => { }, tooltip: 'View Profile' },
+          { icon: EyeIcon, onClick: handleViewProfile, tooltip: 'View Profile' },
           { icon: DeleteIcon, onClick: handleDelete, tooltip: 'Delete' },
         ];
         return (
@@ -309,7 +316,7 @@ export const AccountsTemplate: React.FC<AccountsTemplateProps> = ({ role }) => {
           (x) => x.status.value === 'inactive' || x.status.value === 'in-active'
         );
         const actions: ActionConfig<BaseAccount>[] = [
-          { icon: EyeIcon, onClick: () => { }, tooltip: 'View Profile' },
+          { icon: EyeIcon, onClick: handleViewProfile, tooltip: 'View Profile' },
           { icon: DeleteIcon, onClick: handleDelete, tooltip: 'Delete' },
         ];
         return (
@@ -344,6 +351,7 @@ export const AccountsTemplate: React.FC<AccountsTemplateProps> = ({ role }) => {
               {
                 label: 'View Profile & Activities',
                 icon: <MenuIcon src="/icons/table/view.svg" alt="view" />,
+                onClick: handleViewProfile,
               },
               {
                 label: 'Issue Warning',
@@ -383,7 +391,7 @@ export const AccountsTemplate: React.FC<AccountsTemplateProps> = ({ role }) => {
             detailTitle: () => 'Reason for Blocked',
             detailContent: renderStatusReason('No block reason provided.'),
           },
-          { icon: EyeIcon, onClick: () => { }, tooltip: 'View Profile' },
+          { icon: EyeIcon, onClick: handleViewProfile, tooltip: 'View Profile' },
           { icon: DeleteIcon, onClick: handleDelete, tooltip: 'Delete' },
         ];
         return (
@@ -409,7 +417,7 @@ export const AccountsTemplate: React.FC<AccountsTemplateProps> = ({ role }) => {
             detailTitle: () => 'Reason for Suspended',
             detailContent: renderStatusReason('No suspend reason provided.'),
           },
-          { icon: EyeIcon, onClick: () => { }, tooltip: 'View Profile' },
+          { icon: EyeIcon, onClick: handleViewProfile, tooltip: 'View Profile' },
           { icon: RestoreIcon, onClick: handleRestore, tooltip: 'Restore' },
         ];
         return (
