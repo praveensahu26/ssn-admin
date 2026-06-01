@@ -10,11 +10,19 @@ export interface ProfilePost {
 
 interface ProfilePostsGridProps {
   posts?: ProfilePost[];
+  activeCategory?: string;
+  onCategoryChange?: (category: string) => void;
   getPostHref?: (post: ProfilePost) => string;
 }
 
-export function ProfilePostsGrid({ posts = [], getPostHref }: ProfilePostsGridProps) {
-  const [activeCategory, setActiveCategory] = useState('All');
+export function ProfilePostsGrid({
+  posts = [],
+  activeCategory,
+  onCategoryChange,
+  getPostHref,
+}: ProfilePostsGridProps) {
+  const [internalActiveCategory, setInternalActiveCategory] = useState('All');
+  const selectedCategory = activeCategory ?? internalActiveCategory;
 
   const categories = useMemo(
     () => Array.from(new Set(posts.flatMap((post) => post.categories ?? []))),
@@ -22,10 +30,15 @@ export function ProfilePostsGrid({ posts = [], getPostHref }: ProfilePostsGridPr
   );
 
   const visiblePosts = useMemo(() => {
-    if (activeCategory === 'All') return posts;
+    if (selectedCategory === 'All') return posts;
 
-    return posts.filter((post) => post.categories?.includes(activeCategory));
-  }, [activeCategory, posts]);
+    return posts.filter((post) => post.categories?.includes(selectedCategory));
+  }, [posts, selectedCategory]);
+
+  function handleCategoryChange(category: string) {
+    setInternalActiveCategory(category);
+    onCategoryChange?.(category);
+  }
 
   if (!posts.length) {
     return null;
@@ -37,7 +50,7 @@ export function ProfilePostsGrid({ posts = [], getPostHref }: ProfilePostsGridPr
 
       <div className="mt-4 flex w-full flex-wrap gap-1 rounded-lg border border-[#DCE5EF] bg-white p-1">
         {['All', ...categories].map((category) => {
-          const isActive = activeCategory === category;
+          const isActive = selectedCategory === category;
 
           return (
             <button
@@ -48,7 +61,7 @@ export function ProfilePostsGrid({ posts = [], getPostHref }: ProfilePostsGridPr
                   ? 'bg-[#EAF4FF] text-btn-primary'
                   : 'bg-white text-text-secondary hover:bg-[#F8FAFC]'
               }`}
-              onClick={() => setActiveCategory(category)}
+              onClick={() => handleCategoryChange(category)}
             >
               {category}
             </button>

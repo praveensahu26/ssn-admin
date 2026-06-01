@@ -13,6 +13,9 @@ const ReportersPage = lazy(() => import('@/pages/reporters/ReportersPage'));
 const ReporterProfileDetailsPage = lazy(() => import('@/pages/reporters/[username]/ReporterProfileDetails'));
 const ReporterPostDetailsPage = lazy(() => import('@/pages/reporters/posts/ReporterPostDetails'));
 const ReporterCampaignDetailsPage = lazy(() => import('@/pages/reporters/campaigns/ReporterCampaignDetails'));
+const NewsFeedPage = lazy(() => import('@/pages/news-feed/NewsFeedPage'));
+const NewsFeedPostDetailsPage = lazy(() => import('@/pages/news-feed/NewsFeedPostDetails'));
+const CampaignsPage = lazy(() => import('@/pages/campaigns/CampaignsPage'));
 const LoginPage = lazy(() => import('@/pages/login/LoginPage'));
 const ForgotPasswordPage = lazy(() => import('@/pages/forgot-password/ForgotPasswordPage'));
 const VerifyEmailPage = lazy(() => import('@/pages/verify-email/VerifyEmailPage'));
@@ -47,6 +50,9 @@ const AppRouter = () => {
             <Route path={`${ROUTES.reporters}/:username`} element={<ReporterProfileDetailsPage />} />
             <Route path={`${ROUTES.reporters}/:username/posts/:postId`} element={<ReporterPostDetailsPage />} />
             <Route path={`${ROUTES.reporters}/:username/campaigns/:campaignId`} element={<ReporterCampaignDetailsPage />} />
+            <Route path={ROUTES.newsFeed} element={<NewsFeedPage />} />
+            <Route path={`${ROUTES.newsFeed}/:postId`} element={<NewsFeedPostDetailsPage />} />
+            <Route path={ROUTES.campaigns} element={<CampaignsPage />} />
           </Route>
 
           <Route path={ROUTES.notFound} element={<div className="p-8 flex items-center justify-center h-screen text-3xl font-bold text-black">404 - Page Not Found</div>} />
