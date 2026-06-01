@@ -7,8 +7,12 @@ import ProtectedRoute from './ProtectedRoute';
 const DashboardPage = lazy(() => import('@/pages/dashboard/Dashboard'));
 const UsersPage = lazy(() => import('@/pages/users/UsersPage'));
 const UserProfileDetailsPage = lazy(() => import('@/pages/users/[username]/UserProfileDetails'));
+const UserPostDetailsPage = lazy(() => import('@/pages/users/posts/UserPostDetails'));
+const UserCampaignDetailsPage = lazy(() => import('@/pages/users/campaigns/UserCampaignDetails'));
 const ReportersPage = lazy(() => import('@/pages/reporters/ReportersPage'));
 const ReporterProfileDetailsPage = lazy(() => import('@/pages/reporters/[username]/ReporterProfileDetails'));
+const ReporterPostDetailsPage = lazy(() => import('@/pages/reporters/posts/ReporterPostDetails'));
+const ReporterCampaignDetailsPage = lazy(() => import('@/pages/reporters/campaigns/ReporterCampaignDetails'));
 const LoginPage = lazy(() => import('@/pages/login/LoginPage'));
 const ForgotPasswordPage = lazy(() => import('@/pages/forgot-password/ForgotPasswordPage'));
 const VerifyEmailPage = lazy(() => import('@/pages/verify-email/VerifyEmailPage'));
@@ -37,8 +41,12 @@ const AppRouter = () => {
             <Route path={ROUTES.dashboard} element={<DashboardPage />} />
             <Route path={ROUTES.users} element={<UsersPage />} />
             <Route path={`${ROUTES.users}/:username`} element={<UserProfileDetailsPage />} />
+            <Route path={`${ROUTES.users}/:username/posts/:postId`} element={<UserPostDetailsPage />} />
+            <Route path={`${ROUTES.users}/:username/campaigns/:campaignId`} element={<UserCampaignDetailsPage />} />
             <Route path={ROUTES.reporters} element={<ReportersPage />} />
             <Route path={`${ROUTES.reporters}/:username`} element={<ReporterProfileDetailsPage />} />
+            <Route path={`${ROUTES.reporters}/:username/posts/:postId`} element={<ReporterPostDetailsPage />} />
+            <Route path={`${ROUTES.reporters}/:username/campaigns/:campaignId`} element={<ReporterCampaignDetailsPage />} />
           </Route>
 
           <Route path={ROUTES.notFound} element={<div className="p-8 flex items-center justify-center h-screen text-3xl font-bold text-black">404 - Page Not Found</div>} />

@@ -27,6 +27,7 @@ export const UserProfileDetails: React.FC = () => {
       {profile ? (
         <ProfileDetailsLayout
           profile={profile}
+          detailsBasePath={`/users/${slugifyProfileName(profile.name)}`}
           onBack={() => navigate(returnTab && returnTab !== 'overview' ? `/users?tab=${returnTab}` : '/users')}
         />
       ) : (

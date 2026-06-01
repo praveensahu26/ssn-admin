@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import ProfileCover from '@/components/profile/ProfileCover';
+import ProfileCampaignsGrid, { type ProfileCampaign } from '@/components/profile/ProfileCampaignsGrid';
 import ProfileInfoItem from '@/components/profile/ProfileInfoItem';
 import ProfilePostsGrid, { type ProfilePost } from '@/components/profile/ProfilePostsGrid';
 import ProfileStatsCard from '@/components/profile/ProfileStatsCard';
@@ -33,11 +34,12 @@ export interface ProfileDetailsAccount {
     reason?: string;
   };
   posts?: ProfilePost[];
-  campaigns?: unknown[];
+  campaigns?: ProfileCampaign[];
 }
 
 interface ProfileDetailsLayoutProps {
   profile: ProfileDetailsAccount;
+  detailsBasePath?: string;
   onBack: () => void;
 }
 
@@ -98,7 +100,8 @@ function getProfileStatusBanner(profile: ProfileDetailsAccount) {
   return null;
 }
 
-export function ProfileDetailsLayout({ profile, onBack }: ProfileDetailsLayoutProps) {
+export function ProfileDetailsLayout({ profile, detailsBasePath, onBack }: ProfileDetailsLayoutProps) {
+  const [activeContent, setActiveContent] = useState<'posts' | 'campaigns'>('posts');
   const [isActionsOpen, setIsActionsOpen] = useState(false);
   const [isMessageDrawerOpen, setIsMessageDrawerOpen] = useState(false);
   const [isReportsDrawerOpen, setIsReportsDrawerOpen] = useState(false);
@@ -274,11 +277,31 @@ export function ProfileDetailsLayout({ profile, onBack }: ProfileDetailsLayoutPr
               value={formatCount(profile.followingCount)}
               onClick={() => setConnectionsDrawer({ title: 'Following', data: profile.following ?? [] })}
             />
-            <ProfileStatsCard label="Posts" value={formatCount(profile.posts?.length)} />
-            <ProfileStatsCard label="Campaigns" value={formatCount(profile.campaigns?.length)} />
+            <ProfileStatsCard
+              isActive={activeContent === 'posts'}
+              label="Posts"
+              value={formatCount(profile.posts?.length)}
+              onClick={() => setActiveContent('posts')}
+            />
+            <ProfileStatsCard
+              isActive={activeContent === 'campaigns'}
+              label="Campaigns"
+              value={formatCount(profile.campaigns?.length)}
+              onClick={() => setActiveContent('campaigns')}
+            />
           </div>
 
-          <ProfilePostsGrid posts={profile.posts} />
+          {activeContent === 'posts' ? (
+            <ProfilePostsGrid
+              posts={profile.posts}
+              getPostHref={detailsBasePath ? (post) => `${detailsBasePath}/posts/${post.id}` : undefined}
+            />
+          ) : (
+            <ProfileCampaignsGrid
+              campaigns={profile.campaigns}
+              getCampaignHref={detailsBasePath ? (campaign) => `${detailsBasePath}/campaigns/${campaign.id}` : undefined}
+            />
+          )}
         </div>
       </div>
 
