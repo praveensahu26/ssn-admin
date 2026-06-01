@@ -27,6 +27,7 @@ export const ReporterProfileDetails: React.FC = () => {
       {profile ? (
         <ProfileDetailsLayout
           profile={profile}
+          detailsBasePath={`/reporters/${slugifyProfileName(profile.name)}`}
           onBack={() => navigate(returnTab && returnTab !== 'overview' ? `/reporters?tab=${returnTab}` : '/reporters')}
         />
       ) : (

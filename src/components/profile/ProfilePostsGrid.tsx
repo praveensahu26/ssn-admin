@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 
 export interface ProfilePost {
   id: string;
@@ -9,9 +10,10 @@ export interface ProfilePost {
 
 interface ProfilePostsGridProps {
   posts?: ProfilePost[];
+  getPostHref?: (post: ProfilePost) => string;
 }
 
-export function ProfilePostsGrid({ posts = [] }: ProfilePostsGridProps) {
+export function ProfilePostsGrid({ posts = [], getPostHref }: ProfilePostsGridProps) {
   const [activeCategory, setActiveCategory] = useState('All');
 
   const categories = useMemo(
@@ -55,22 +57,30 @@ export function ProfilePostsGrid({ posts = [] }: ProfilePostsGridProps) {
       </div>
 
       <div className="mt-5 grid gap-5 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
-        {visiblePosts.map((post) => (
-          <article
-            key={post.id}
-            className="relative aspect-[1.4/0.8] cursor-pointer overflow-hidden rounded-lg bg-[#F1F5F9]"
-          >
-            <img
-              src={post.mediaUrl}
-              alt="Post media"
-              className="h-full w-full object-cover"
-            />
-            <div className="absolute bottom-2 left-2 flex h-6 items-center gap-1 rounded-full bg-black/35 px-2 text-xs-custom font-medium leading-none text-white border-[#505F70] cursor-pointer">
-              <img src="/icons/profile/view.svg" alt="views" className="h-4 w-4 brightness-0 invert" />
-              <span>{post.viewCount}</span>
-            </div>
-          </article>
-        ))}
+        {visiblePosts.map((post) => {
+          const card = (
+            <article className="relative aspect-[1.4/0.8] cursor-pointer overflow-hidden rounded-lg bg-[#F1F5F9]">
+              <img
+                src={post.mediaUrl}
+                alt="Post media"
+                className="h-full w-full object-cover"
+              />
+              <div className="absolute bottom-2 left-2 flex h-6 items-center gap-1 rounded-full bg-black/35 px-2 text-xs-custom font-medium leading-none text-white border-[#505F70] cursor-pointer">
+                <img src="/icons/profile/view.svg" alt="views" className="h-4 w-4 brightness-0 invert" />
+                <span>{post.viewCount}</span>
+              </div>
+            </article>
+          );
+          const href = getPostHref?.(post);
+
+          return href ? (
+            <Link key={post.id} to={href} className="block">
+              {card}
+            </Link>
+          ) : (
+            <div key={post.id}>{card}</div>
+          );
+        })}
       </div>
     </section>
   );
