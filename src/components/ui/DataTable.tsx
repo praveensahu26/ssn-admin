@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import SearchBar from '@/components/ui/SearchBar';
 import DownloadButton from '@/components/ui/DownloadButton';
 import Pagination from '@/components/ui/Pagination';
@@ -57,6 +57,24 @@ export function DataTable<T extends { id: string; name?: string; profilePicture?
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [activeDetail, setActiveDetail] = useState<{ rowId: string; actionIndex: number } | null>(null);
+
+  useEffect(() => {
+    if (!activeDetail) return;
+
+    function handlePointerDown(event: MouseEvent) {
+      const target = event.target as HTMLElement;
+
+      if (!target.closest('[data-action-popover="true"]')) {
+        setActiveDetail(null);
+      }
+    }
+
+    document.addEventListener('mousedown', handlePointerDown);
+
+    return () => {
+      document.removeEventListener('mousedown', handlePointerDown);
+    };
+  }, [activeDetail]);
 
   // Reset page when search query changes
   const handleSearchChange = (query: string) => {
@@ -256,6 +274,7 @@ export function DataTable<T extends { id: string; name?: string; profilePicture?
                             return (
                               <div
                                 key={aIdx}
+                                data-action-popover="true"
                                 className="relative inline-flex items-center justify-center"
                                 onMouseEnter={() => {
                                   if (hasDetail && !hasMenu) {
