@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useLocation, useSearchParams } from 'react-router-dom';
 import ProfileCover from '@/components/profile/ProfileCover';
 import ProfileCampaignsGrid, { type ProfileCampaign } from '@/components/profile/ProfileCampaignsGrid';
 import ProfileInfoItem from '@/components/profile/ProfileInfoItem';
@@ -67,9 +67,9 @@ function SvgIcon({ src, alt }: { src: string; alt: string }) {
 
 const profileActionItems = [
   { id: 'messages', label: 'View Messages', icon: '/icons/profile/chat.svg', alt: 'chat' },
-  { id: 'activity', label: 'View User Activity', icon: '/icons/profile/view.svg', alt: 'view' },
+  { id: 'activity', label: 'View {role} Activity', icon: '/icons/profile/view.svg', alt: 'view' },
   { id: 'warning', label: 'Issue Warning', icon: '/icons/profile/warning.svg', alt: 'warning' },
-  { id: 'block', label: 'Block User', icon: '/icons/profile/remove.svg', alt: 'block' },
+  { id: 'block', label: 'Block {role}', icon: '/icons/profile/remove.svg', alt: 'block' },
   { id: 'suspend', label: 'Suspend Account', icon: '/icons/profile/delete.svg', alt: 'suspend' },
 ];
 
@@ -100,8 +100,9 @@ function getProfileStatusBanner(profile: ProfileDetailsAccount) {
 
   return null;
 }
-
+ 
 export function ProfileDetailsLayout({ profile, detailsBasePath, onBack }: ProfileDetailsLayoutProps) {
+  const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
   const activeContent = searchParams.get('tab') === 'campaigns' ? 'campaigns' : 'posts';
   const activePostCategory = searchParams.get('postCategory') ?? 'All';
@@ -119,6 +120,7 @@ export function ProfileDetailsLayout({ profile, detailsBasePath, onBack }: Profi
   const profilePicture = profile.profilePicture ?? '/icons/logo.svg';
   const statusBanner = getProfileStatusBanner(profile);
   const isSuspended = profile.status?.value === 'suspended';
+  const profileRole = location.pathname.startsWith('/reporters') ? 'reporter' : 'user';
 
   function updateProfileView(updates: {
     tab?: 'posts' | 'campaigns';
@@ -256,7 +258,7 @@ export function ProfileDetailsLayout({ profile, detailsBasePath, onBack }: Profi
                           }}
                         >
                           <img src={item.icon} alt={item.alt} className="h-6 w-6 shrink-0 object-contain" />
-                          <span>{item.label}</span>
+                          <span>{item.label.replace('{role}', profileRole === 'reporter' ? 'Reporter' : 'User')}</span>
                         </button>
                       ))}
                     </div>
@@ -362,6 +364,7 @@ export function ProfileDetailsLayout({ profile, detailsBasePath, onBack }: Profi
         <ModerationActionDrawer
           isOpen={Boolean(moderationAction)}
           config={moderationActionConfigs[moderationAction]}
+          profileRole={profileRole}
           onClose={() => setModerationAction(null)}
         />
       )}
