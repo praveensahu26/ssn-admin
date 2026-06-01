@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import ProfileCover from '@/components/profile/ProfileCover';
 import ProfileCampaignsGrid, { type ProfileCampaign } from '@/components/profile/ProfileCampaignsGrid';
 import ProfileInfoItem from '@/components/profile/ProfileInfoItem';
@@ -101,7 +102,10 @@ function getProfileStatusBanner(profile: ProfileDetailsAccount) {
 }
 
 export function ProfileDetailsLayout({ profile, detailsBasePath, onBack }: ProfileDetailsLayoutProps) {
-  const [activeContent, setActiveContent] = useState<'posts' | 'campaigns'>('posts');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const activeContent = searchParams.get('tab') === 'campaigns' ? 'campaigns' : 'posts';
+  const activePostCategory = searchParams.get('postCategory') ?? 'All';
+  const activeCampaignCategory = searchParams.get('campaignCategory') ?? undefined;
   const [isActionsOpen, setIsActionsOpen] = useState(false);
   const [isMessageDrawerOpen, setIsMessageDrawerOpen] = useState(false);
   const [isReportsDrawerOpen, setIsReportsDrawerOpen] = useState(false);
@@ -115,6 +119,34 @@ export function ProfileDetailsLayout({ profile, detailsBasePath, onBack }: Profi
   const profilePicture = profile.profilePicture ?? '/icons/logo.svg';
   const statusBanner = getProfileStatusBanner(profile);
   const isSuspended = profile.status?.value === 'suspended';
+
+  function updateProfileView(updates: {
+    tab?: 'posts' | 'campaigns';
+    postCategory?: string;
+    campaignCategory?: string;
+  }) {
+    setSearchParams((currentParams) => {
+      const nextParams = new URLSearchParams(currentParams);
+
+      if (updates.tab) {
+        nextParams.set('tab', updates.tab);
+      }
+
+      if (updates.postCategory) {
+        if (updates.postCategory === 'All') {
+          nextParams.delete('postCategory');
+        } else {
+          nextParams.set('postCategory', updates.postCategory);
+        }
+      }
+
+      if (updates.campaignCategory) {
+        nextParams.set('campaignCategory', updates.campaignCategory);
+      }
+
+      return nextParams;
+    });
+  }
 
   useEffect(() => {
     if (!isActionsOpen) return;
@@ -281,24 +313,28 @@ export function ProfileDetailsLayout({ profile, detailsBasePath, onBack }: Profi
               isActive={activeContent === 'posts'}
               label="Posts"
               value={formatCount(profile.posts?.length)}
-              onClick={() => setActiveContent('posts')}
+              onClick={() => updateProfileView({ tab: 'posts' })}
             />
             <ProfileStatsCard
               isActive={activeContent === 'campaigns'}
               label="Campaigns"
               value={formatCount(profile.campaigns?.length)}
-              onClick={() => setActiveContent('campaigns')}
+              onClick={() => updateProfileView({ tab: 'campaigns' })}
             />
           </div>
 
           {activeContent === 'posts' ? (
             <ProfilePostsGrid
               posts={profile.posts}
+              activeCategory={activePostCategory}
+              onCategoryChange={(category) => updateProfileView({ tab: 'posts', postCategory: category })}
               getPostHref={detailsBasePath ? (post) => `${detailsBasePath}/posts/${post.id}` : undefined}
             />
           ) : (
             <ProfileCampaignsGrid
               campaigns={profile.campaigns}
+              activeCategory={activeCampaignCategory}
+              onCategoryChange={(category) => updateProfileView({ tab: 'campaigns', campaignCategory: category })}
               getCampaignHref={detailsBasePath ? (campaign) => `${detailsBasePath}/campaigns/${campaign.id}` : undefined}
             />
           )}

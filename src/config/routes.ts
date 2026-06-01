@@ -7,6 +7,8 @@ export const ROUTES = {
   dashboard: '/dashboard',
   users: '/users',
   reporters: '/reporters',
+  newsFeed: '/news-feed',
+  campaigns: '/campaigns',
   notFound: '*',
 } as const;
 

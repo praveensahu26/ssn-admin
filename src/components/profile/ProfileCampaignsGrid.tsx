@@ -10,6 +10,8 @@ export interface ProfileCampaign {
 
 interface ProfileCampaignsGridProps {
   campaigns?: ProfileCampaign[];
+  activeCategory?: string;
+  onCategoryChange?: (category: string) => void;
   getCampaignHref?: (campaign: ProfileCampaign) => string;
 }
 
@@ -19,31 +21,42 @@ function getCampaignCategories(campaign: ProfileCampaign) {
   return Array.isArray(campaign.categories) ? campaign.categories : [campaign.categories];
 }
 
-export function ProfileCampaignsGrid({ campaigns = [], getCampaignHref }: ProfileCampaignsGridProps) {
+export function ProfileCampaignsGrid({
+  campaigns = [],
+  activeCategory,
+  onCategoryChange,
+  getCampaignHref,
+}: ProfileCampaignsGridProps) {
   const categories = useMemo(
     () => Array.from(new Set(campaigns.flatMap(getCampaignCategories))),
     [campaigns]
   );
-  const [activeCategory, setActiveCategory] = useState(categories[0] ?? 'All');
+  const [internalActiveCategory, setInternalActiveCategory] = useState(categories[0] ?? 'All');
+  const selectedCategory = activeCategory ?? internalActiveCategory;
 
   useEffect(() => {
     if (!categories.length) {
-      setActiveCategory('All');
+      setInternalActiveCategory('All');
       return;
     }
 
-    if (!categories.includes(activeCategory)) {
-      setActiveCategory(categories[0] ?? 'All');
+    if (!activeCategory && !categories.includes(internalActiveCategory)) {
+      setInternalActiveCategory(categories[0] ?? 'All');
     }
-  }, [activeCategory, categories]);
+  }, [activeCategory, categories, internalActiveCategory]);
 
   const visibleCampaigns = useMemo(() => {
-    if (activeCategory === 'All') return campaigns;
+    if (selectedCategory === 'All') return campaigns;
 
     return campaigns.filter((campaign) =>
-      getCampaignCategories(campaign).includes(activeCategory)
+      getCampaignCategories(campaign).includes(selectedCategory)
     );
-  }, [activeCategory, campaigns]);
+  }, [campaigns, selectedCategory]);
+
+  function handleCategoryChange(category: string) {
+    setInternalActiveCategory(category);
+    onCategoryChange?.(category);
+  }
 
   if (!campaigns.length) {
     return null;
@@ -55,7 +68,7 @@ export function ProfileCampaignsGrid({ campaigns = [], getCampaignHref }: Profil
 
       <div className="mt-4 flex w-full flex-wrap gap-1 rounded-lg border border-[#DCE5EF] bg-white p-1">
         {(categories.length ? categories : ['All']).map((category) => {
-          const isActive = activeCategory === category;
+          const isActive = selectedCategory === category;
 
           return (
             <button
@@ -66,7 +79,7 @@ export function ProfileCampaignsGrid({ campaigns = [], getCampaignHref }: Profil
                   ? 'bg-[#EAF4FF] text-btn-primary'
                   : 'bg-white text-text-secondary hover:bg-[#F8FAFC]'
               }`}
-              onClick={() => setActiveCategory(category)}
+              onClick={() => handleCategoryChange(category)}
             >
               {category}
             </button>

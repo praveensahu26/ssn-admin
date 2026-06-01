@@ -53,13 +53,13 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
     },
     {
       name: 'News Feed',
-      path: '/news-feed',
+      path: ROUTES.newsFeed,
       activeIcon: '/icons/sidebar/newsfeedActive.svg',
       inactiveIcon: '/icons/sidebar/newsfeedInactive.svg',
     },
     {
       name: 'Campaigns',
-      path: '/campaigns',
+      path: ROUTES.campaigns,
       activeIcon: '/icons/sidebar/campaignsActive.svg',
       inactiveIcon: '/icons/sidebar/campaignsInactive.svg',
     },
@@ -90,13 +90,17 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
       <aside className="w-[236px] bg-white border-r border-[#DCE5EF] flex flex-col justify-between p-6 fixed h-full left-0 top-0 z-20">
         <div>
           {/* Logo Section */}
-          <div className="flex items-center gap-3 mb-10 px-2">
+          <button
+            type="button"
+            className="mb-10 flex items-center gap-3 px-2 text-left"
+            onClick={() => navigate(ROUTES.dashboard)}
+          >
             <img src="/icons/logo.svg" alt="Social Society News Logo" className="w-10 h-10 object-contain" />
             <div className="flex flex-col">
               <span className="text-base-custom font-semibold text-[#4D4D4D] leading-tight font-poppins">Social Society</span>
               <span className="text-md-custom font-medium text-[#4D4D4D] font-poppins">News</span>
             </div>
-          </div>
+          </button>
 
           {/* Navigation Links */}
           <nav className="flex flex-col gap-2">
@@ -109,7 +113,9 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
                     if (
                       item.path === ROUTES.dashboard ||
                       item.path === ROUTES.users ||
-                      item.path === ROUTES.reporters
+                      item.path === ROUTES.reporters ||
+                      item.path === ROUTES.newsFeed ||
+                      item.path === ROUTES.campaigns
                     ) {
                       navigate(item.path);
                     } else {
@@ -150,7 +156,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
       </aside>
 
       {/* Main Content Area */}
-      <div className="flex-1 pl-[230px]">
+      <div className="min-w-0 flex-1 overflow-x-hidden pl-[230px]">
         {/* Header */}
         <header className="h-[70px] bg-white border-b border-[#DCE5EF] flex items-center justify-between px-8 sticky top-0 z-10">
           <div>
@@ -220,7 +226,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
         </header>
 
         {/* Inner Content Area */}
-        <main className="p-8 pt-4 min-h-[calc(100vh-70px)] bg-[#F4F7FC]">
+        <main className="min-h-[calc(100vh-70px)] overflow-x-hidden bg-[#F4F7FC] p-8 pt-4">
           {children}
         </main>
       </div>
