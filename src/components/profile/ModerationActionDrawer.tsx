@@ -18,6 +18,7 @@ export interface ModerationActionConfig {
 interface ModerationActionDrawerProps {
   isOpen: boolean;
   config: ModerationActionConfig;
+  profileRole?: 'user' | 'reporter';
   onClose: () => void;
   onSubmit?: (payload: {
     reasons: string[];
@@ -92,6 +93,7 @@ export type ModerationActionType = keyof typeof moderationActionConfigs;
 export default function ModerationActionDrawer({
   isOpen,
   config,
+  profileRole = 'user',
   onClose,
   onSubmit,
 }: ModerationActionDrawerProps) {
@@ -149,11 +151,23 @@ export default function ModerationActionDrawer({
     onClose();
   }
 
+  function renderRoleCopy(value: string) {
+    if (profileRole === 'user') return value;
+
+    return value
+      .replace(/\bUser\b/g, 'Reporter')
+      .replace(/\buser\b/g, 'reporter');
+  }
+
+  const title = renderRoleCopy(config.title);
+  const descriptionLines = config.descriptionLines.map(renderRoleCopy);
+  const primaryButtonLabel = renderRoleCopy(config.primaryButtonLabel);
+
   return (
     <div className={`fixed inset-0 z-50 ${isOpen ? 'pointer-events-auto' : 'pointer-events-none'}`} aria-hidden={!isOpen}>
       <button
         type="button"
-        aria-label={`Close ${config.title} backdrop`}
+        aria-label={`Close ${title} backdrop`}
         className={`absolute inset-0 bg-black/20 backdrop-blur-[1px] transition-opacity duration-300 ${
           isOpen ? 'opacity-100' : 'opacity-0'
         }`}
@@ -163,16 +177,16 @@ export default function ModerationActionDrawer({
       <aside
         role="dialog"
         aria-modal="true"
-        aria-label={config.title}
+        aria-label={title}
         className={`absolute right-0 top-0 flex h-full w-full max-w-[400px] flex-col bg-white shadow-card transition-transform duration-300 ease-out ${
           isOpen ? 'translate-x-0' : 'translate-x-full'
         }`}
       >
         <header className="flex shrink-0 items-start justify-between border-b border-[#DCE5EF] px-6 pb-4 pt-6">
           <div className="min-w-0">
-            <h2 className="text-base-custom font-medium leading-5 text-text-primary">{config.title}</h2>
+            <h2 className="text-base-custom font-medium leading-5 text-text-primary">{title}</h2>
             <div className="mt-3 flex flex-col gap-1">
-              {config.descriptionLines.map((line) => (
+              {descriptionLines.map((line) => (
                 <p key={line} className="text-sm-custom font-medium leading-5 text-text-secondary">
                   {line}
                 </p>
@@ -182,7 +196,7 @@ export default function ModerationActionDrawer({
 
           <button
             type="button"
-            aria-label={`Close ${config.title} drawer`}
+            aria-label={`Close ${title} drawer`}
             className="ml-3 flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-[#DCE5EF] text-text-primary"
             onClick={onClose}
           >
@@ -291,7 +305,7 @@ export default function ModerationActionDrawer({
             className="flex h-12 w-full items-center justify-center rounded-lg bg-btn-primary text-sm-custom font-medium text-white"
             onClick={handleSubmit}
           >
-            {config.primaryButtonLabel}
+            {primaryButtonLabel}
           </button>
           <button
             type="button"
