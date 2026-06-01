@@ -18,6 +18,10 @@ interface CalendarModalProps {
   onApply?: (range: { start: Date | null; end: Date | null; label: string }) => void;
   /** Position the modal relative to an anchor element */
   anchorRef?: React.RefObject<HTMLElement | null>;
+  /** Hide quick range options when only a custom date range picker is needed */
+  hideQuickOptions?: boolean;
+  /** Prevent navigating to months before the current month */
+  disablePastMonths?: boolean;
 }
 
 
@@ -86,6 +90,8 @@ const CalendarModal: React.FC<CalendarModalProps> = ({
   onClose,
   onApply,
   anchorRef,
+  hideQuickOptions = false,
+  disablePastMonths = false,
 }) => {
   const today = new Date();
 
@@ -102,8 +108,14 @@ const CalendarModal: React.FC<CalendarModalProps> = ({
   useEffect(() => {
     if (isOpen) {
       setSelectedOption('Custom');
+
+      if (disablePastMonths) {
+        const currentDate = new Date();
+        setViewYear(currentDate.getFullYear());
+        setViewMonth(currentDate.getMonth());
+      }
     }
-  }, [isOpen]);
+  }, [disablePastMonths, isOpen]);
 
   // Close on outside click
   useEffect(() => {
@@ -125,7 +137,12 @@ const CalendarModal: React.FC<CalendarModalProps> = ({
   if (!isOpen) return null;
 
   // ── Month navigation ──
+  const isViewingCurrentMonth = viewYear === today.getFullYear() && viewMonth === today.getMonth();
+  const isPrevMonthDisabled = disablePastMonths && isViewingCurrentMonth;
+
   const goToPrevMonth = () => {
+    if (isPrevMonthDisabled) return;
+
     if (viewMonth === 0) {
       setViewMonth(11);
       setViewYear(y => y - 1);
@@ -320,15 +337,15 @@ const CalendarModal: React.FC<CalendarModalProps> = ({
         style={{
           top: '72px',
           right: '24px',
-          minWidth: '520px',
-          maxWidth: '560px',
+          minWidth: hideQuickOptions ? '360px' : '520px',
+          maxWidth: hideQuickOptions ? '390px' : '560px',
         }}
         role="dialog"
         aria-modal="true"
         aria-label="Date range picker"
       >
         {/* ── Left panel ── */}
-        <div className="flex flex-col gap-1 px-5 py-6 border-r border-[#DCE5EF] min-w-[160px] bg-white">
+        {!hideQuickOptions && <div className="flex flex-col gap-1 px-5 py-6 border-r border-[#DCE5EF] min-w-[160px] bg-white">
           {QUICK_OPTIONS.map((opt) => (
             <button
               key={opt}
@@ -341,7 +358,7 @@ const CalendarModal: React.FC<CalendarModalProps> = ({
               {opt}
             </button>
           ))}
-        </div>
+        </div>}
 
         {/* ── Right panel ── */}
         <div className="flex flex-col flex-1 px-5 py-5">
@@ -349,7 +366,10 @@ const CalendarModal: React.FC<CalendarModalProps> = ({
           <div className="flex items-center justify-between mb-4">
             <button
               onClick={goToPrevMonth}
-              className="w-9 h-9 rounded-xl border border-[#DCE5EF] flex items-center justify-center text-text-secondary"
+              disabled={isPrevMonthDisabled}
+              className={`w-9 h-9 rounded-xl border border-[#DCE5EF] flex items-center justify-center text-text-secondary ${
+                isPrevMonthDisabled ? 'opacity-40 cursor-not-allowed' : ''
+              }`}
               aria-label="Previous month"
             >
               <ArrowLeft />

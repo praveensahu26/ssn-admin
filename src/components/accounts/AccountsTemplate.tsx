@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import MainLayout from '@/components/layout/MainLayout';
 import { AccountsHeader, type AccountTab } from '@/components/accounts/AccountsHeader';
 import { AccountsOverview } from '@/components/accounts/AccountsOverview';
@@ -52,6 +52,21 @@ interface BaseAccount {
 
 const initialUsers = _initialUsers as BaseAccount[];
 const initialReporters = _initialReporters as BaseAccount[];
+
+const accountTabs: AccountTab[] = [
+  'overview',
+  'all',
+  'active',
+  'inactive',
+  'reported',
+  'blocked',
+  'suspended',
+  'verification',
+];
+
+function isAccountTab(value: string | null): value is AccountTab {
+  return Boolean(value && accountTabs.includes(value as AccountTab));
+}
 
 
 
@@ -176,7 +191,16 @@ const verificationColumns: ColumnConfig<BaseAccount>[] = [
 
 export const AccountsTemplate: React.FC<AccountsTemplateProps> = ({ role }) => {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<AccountTab>('overview');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [activeTab, setActiveTab] = useState<AccountTab>(() => {
+    const tab = searchParams.get('tab');
+
+    if (isAccountTab(tab) && (role === 'reporter' || tab !== 'verification')) {
+      return tab;
+    }
+
+    return 'overview';
+  });
 
   const [usersList, setUsersList] = useState<BaseAccount[]>(() =>
     initialUsers.map((u) => ({
@@ -207,7 +231,12 @@ export const AccountsTemplate: React.FC<AccountsTemplateProps> = ({ role }) => {
   };
 
   const handleViewProfile = (row: BaseAccount) => {
-    navigate(getProfilePath(role, row.name));
+    navigate(getProfilePath(role, row.name), { state: { returnTab: activeTab } });
+  };
+
+  const handleTabChange = (tab: AccountTab) => {
+    setActiveTab(tab);
+    setSearchParams(tab === 'overview' ? {} : { tab });
   };
 
   const handleRestore = (row: BaseAccount) => {
@@ -333,7 +362,13 @@ export const AccountsTemplate: React.FC<AccountsTemplateProps> = ({ role }) => {
       }
 
       case 'reported': {
-        const data = currentList.filter((x) => x.isReported);
+        const data = currentList.filter(
+          (x) =>
+            x.isReported &&
+            (x.status.value === 'active' ||
+              x.status.value === 'inactive' ||
+              x.status.value === 'in-active')
+        );
         const actions: ActionConfig<BaseAccount>[] = [
           {
             icon: InfoIcon,
@@ -463,7 +498,7 @@ export const AccountsTemplate: React.FC<AccountsTemplateProps> = ({ role }) => {
   return (
     <MainLayout>
       <div className="flex flex-col gap-1 w-full">
-        <AccountsHeader role={role} activeTab={activeTab} onTabChange={setActiveTab} />
+        <AccountsHeader role={role} activeTab={activeTab} onTabChange={handleTabChange} />
         <div className="w-full">{renderTabContent()}</div>
       </div>
     </MainLayout>
