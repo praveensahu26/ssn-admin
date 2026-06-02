@@ -4,6 +4,10 @@ import MainLayout from '@/components/layout/MainLayout';
 import { AccountsHeader, type AccountTab } from '@/components/accounts/AccountsHeader';
 import { AccountsOverview } from '@/components/accounts/AccountsOverview';
 import DataTable, { type ColumnConfig, type ActionConfig, type BulkActionConfig } from '@/components/ui/DataTable';
+import ModerationActionDrawer, {
+  moderationActionConfigs,
+  type ModerationActionType,
+} from '@/components/profile/ModerationActionDrawer';
 import { getProfilePath } from '@/utils/profileRoutes';
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore – dummyData is a plain JS module with no type declarations
@@ -192,6 +196,10 @@ const verificationColumns: ColumnConfig<BaseAccount>[] = [
 export const AccountsTemplate: React.FC<AccountsTemplateProps> = ({ role }) => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
+  const [moderationAction, setModerationAction] = useState<{
+    type: Extract<ModerationActionType, 'warning' | 'block'>;
+    account: BaseAccount;
+  } | null>(null);
   const [activeTab, setActiveTab] = useState<AccountTab>(() => {
     const tab = searchParams.get('tab');
 
@@ -232,6 +240,36 @@ export const AccountsTemplate: React.FC<AccountsTemplateProps> = ({ role }) => {
 
   const handleViewProfile = (row: BaseAccount) => {
     navigate(getProfilePath(role, row.name), { state: { returnTab: activeTab } });
+  };
+
+  const handleModerationAction = (
+    type: Extract<ModerationActionType, 'warning' | 'block'>,
+    row: BaseAccount
+  ) => {
+    setModerationAction({ type, account: row });
+  };
+
+  const handleModerationSubmit = (payload: {
+    reasons: string[];
+    description: string;
+    notifyUser: boolean;
+    duration?: string;
+  }) => {
+    if (!moderationAction || moderationAction.type !== 'block') return;
+
+    const selectedReason = payload.description.trim() || payload.reasons[0] || 'No block reason provided.';
+
+    setList((prev) =>
+      prev.map((item) =>
+        item.id === moderationAction.account.id
+          ? {
+              ...item,
+              isReported: false,
+              status: { value: 'blocked', reason: selectedReason },
+            }
+          : item
+      )
+    );
   };
 
   const handleTabChange = (tab: AccountTab) => {
@@ -391,10 +429,12 @@ export const AccountsTemplate: React.FC<AccountsTemplateProps> = ({ role }) => {
               {
                 label: 'Issue Warning',
                 icon: <MenuIcon src="/icons/table/warning.svg" alt="warning" />,
+                onClick: (row) => handleModerationAction('warning', row),
               },
               {
                 label: 'Block User',
                 icon: <MenuIcon src="/icons/table/remove.svg" alt="block" />,
+                onClick: (row) => handleModerationAction('block', row),
               },
               {
                 label: 'Dismiss Report',
@@ -496,12 +536,24 @@ export const AccountsTemplate: React.FC<AccountsTemplateProps> = ({ role }) => {
   };
 
   return (
-    <MainLayout>
-      <div className="flex flex-col gap-1 w-full">
-        <AccountsHeader role={role} activeTab={activeTab} onTabChange={handleTabChange} />
-        <div className="w-full">{renderTabContent()}</div>
-      </div>
-    </MainLayout>
+    <>
+      <MainLayout>
+        <div className="flex flex-col gap-1 w-full">
+          <AccountsHeader role={role} activeTab={activeTab} onTabChange={handleTabChange} />
+          <div className="w-full">{renderTabContent()}</div>
+        </div>
+      </MainLayout>
+
+      {moderationAction && (
+        <ModerationActionDrawer
+          isOpen={Boolean(moderationAction)}
+          config={moderationActionConfigs[moderationAction.type]}
+          profileRole={role}
+          onClose={() => setModerationAction(null)}
+          onSubmit={handleModerationSubmit}
+        />
+      )}
+    </>
   );
 };
 
