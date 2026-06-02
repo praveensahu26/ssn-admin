@@ -97,7 +97,7 @@ export default function ModerationActionDrawer({
   onClose,
   onSubmit,
 }: ModerationActionDrawerProps) {
-  const [selectedReasons, setSelectedReasons] = useState<string[]>(config.reasons);
+  const [selectedReason, setSelectedReason] = useState('');
   const [description, setDescription] = useState(config.descriptionValue);
   const [notifyUser, setNotifyUser] = useState(config.defaultNotifyUser ?? true);
   const [duration, setDuration] = useState(config.durationOptions?.[0] ?? '');
@@ -107,7 +107,7 @@ export default function ModerationActionDrawer({
   useEffect(() => {
     if (!isOpen) return;
 
-    setSelectedReasons([]);
+    setSelectedReason('');
     setDescription(config.descriptionValue);
     setNotifyUser(config.defaultNotifyUser ?? false);
     setDuration(config.durationOptions?.[0] ?? '');
@@ -134,16 +134,12 @@ export default function ModerationActionDrawer({
   }, [isOpen, onClose]);
 
   function toggleReason(reason: string) {
-    setSelectedReasons((currentReasons) =>
-      currentReasons.includes(reason)
-        ? currentReasons.filter((currentReason) => currentReason !== reason)
-        : [...currentReasons, reason],
-    );
+    setSelectedReason((currentReason) => (currentReason === reason ? '' : reason));
   }
 
   function handleSubmit() {
     onSubmit?.({
-      reasons: selectedReasons,
+      reasons: selectedReason ? [selectedReason] : [],
       description,
       notifyUser,
       duration: config.showDuration ? duration : undefined,
@@ -212,7 +208,7 @@ export default function ModerationActionDrawer({
                 <label key={reason} className="flex items-start gap-2 text-sm-custom font-medium leading-4 text-text-secondary">
                   <input
                     type="checkbox"
-                    checked={selectedReasons.includes(reason)}
+                    checked={selectedReason === reason}
                     className="mt-0.5 h-4 w-4 rounded border-[#AFC0D2] accent-btn-primary"
                     onChange={() => toggleReason(reason)}
                   />

@@ -65,7 +65,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
     },
     {
       name: 'Settings',
-      path: '/settings',
+      path: ROUTES.settings,
       activeIcon: '/icons/sidebar/seetingsInactive.svg', // using settings inactive for both
       inactiveIcon: '/icons/sidebar/seetingsInactive.svg',
     },
@@ -115,7 +115,8 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
                       item.path === ROUTES.users ||
                       item.path === ROUTES.reporters ||
                       item.path === ROUTES.newsFeed ||
-                      item.path === ROUTES.campaigns
+                      item.path === ROUTES.campaigns ||
+                      item.path === ROUTES.settings
                     ) {
                       navigate(item.path);
                     } else {

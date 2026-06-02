@@ -6,21 +6,21 @@ interface AuthLayoutProps {
 
 export const AuthLayout: React.FC<AuthLayoutProps> = ({ children }) => {
   return (
-    <div className="min-h-screen w-full flex bg-[#F2F9FF] font-poppins">
-      <div className="hidden lg:block lg:w-[50%] xl:w-[55%] h-screen relative p-6 lg:pr-3">
-        <div className="w-full h-screen rounded-3xl overflow-hidden">
+    <div className="flex min-h-screen w-full bg-[#F2F9FF] p-6 font-poppins md:p-8 lg:gap-6">
+      <div className="hidden min-h-0 lg:block lg:w-[50%] xl:w-[55%]">
+        <div className="h-full min-h-[600px] overflow-hidden rounded-3xl">
           <img
             src="/assets/auth-left.jpg"
             alt="Social Society News"
-            className="w-full h-full object-cover object-top"
+            className="h-full w-full object-cover object-top"
           />
         </div>
       </div>
 
       {/* Right Side: Centered Content */}
-      <div className="w-full lg:w-[50%] xl:w-[45%] flex items-center justify-center p-6 md:p-8 lg:pl-3">
-        <div className="w-full max-w-[620px] bg-white rounded-xl shadow-card border-color p-8 md:p-12 flex flex-col justify-between min-h-[645px]">
-          <div className="flex-1 flex flex-col justify-center">
+      <div className="flex min-h-0 w-full items-stretch justify-center lg:w-[50%] xl:w-[45%]">
+        <div className="flex h-full min-h-[600px] w-full max-w-[720px] flex-col overflow-y-auto rounded-xl border-color bg-white p-8 shadow-card">
+          <div className="flex flex-1 flex-col justify-start pt-15">
             {children}
           </div>
         </div>
