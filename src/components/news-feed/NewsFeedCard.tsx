@@ -65,7 +65,7 @@ export function NewsFeedCard({ post, showViewBadge = false }: NewsFeedCardProps)
     <article
       role="button"
       tabIndex={0}
-      className="overflow-hidden rounded-xl border border-[#DCE5EF] bg-white shadow-card transition-shadow hover:shadow-lg"
+      className="overflow-hidden rounded-xl border border-[#DCE5EF] bg-white"
       onClick={openPostDetails}
       onKeyDown={(event) => {
         if (event.key === 'Enter' || event.key === ' ') {
@@ -113,7 +113,7 @@ export function NewsFeedCard({ post, showViewBadge = false }: NewsFeedCardProps)
           )}
         </h2>
 
-        <div className="mt-4 flex items-center justify-between gap-2">
+        <div className="mt-4 flex flex-col items-start justify-between gap-2">
           <div className="flex min-w-0 items-center gap-2">
             {showAuthorImage ? (
               <img
@@ -130,7 +130,7 @@ export function NewsFeedCard({ post, showViewBadge = false }: NewsFeedCardProps)
             <span className="truncate text-sm-custom font-medium leading-4 text-text-secondary">{post.authorName}</span>
           </div>
 
-          <div className="flex shrink-0 items-center gap-3 text-sm-custom font-medium leading-4 text-text-secondary">
+          <div className="flex shrink-0 ml-1 items-center gap-2 text-sm-custom font-medium leading-4 text-text-secondary">
             <span className="flex items-center gap-1">
               <img src="/icons/profile/like.svg" alt="likes" className="h-4 w-4 object-contain" />
               {post.likeCount}

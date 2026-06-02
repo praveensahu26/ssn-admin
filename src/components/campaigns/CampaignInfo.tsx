@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import CategoryTags, { CategoryBadge } from '@/components/details/CategoryTags';
 import DescriptionSection from '@/components/details/DescriptionSection';
 import LocationInfo from '@/components/details/LocationInfo';
@@ -6,6 +7,14 @@ import MoreActionButton from '@/components/details/MoreActionButton';
 import UserMiniProfile from '@/components/details/UserMiniProfile';
 import CampaignProgress from '@/components/campaigns/CampaignProgress';
 import FundraisingTeam from '@/components/campaigns/FundraisingTeam';
+import CampaignStatusBadge from '@/components/campaigns/CampaignStatusBadge';
+import SuspendCampaignDrawer from '@/components/campaigns/SuspendCampaignDrawer';
+
+const campaignActionIcons = {
+  message: '/icons/profile/message.svg',
+  suspend: '/icons/profile/delete.svg',
+  approve: '/icons/profile/approve.svg',
+};
 
 interface CampaignInfoProps {
   campaign: {
@@ -14,6 +23,7 @@ interface CampaignInfoProps {
     viewCount: string;
     postTime: string;
     title: string;
+    status?: string;
     description: string;
     location: string;
     categories?: string | string[];
@@ -42,8 +52,40 @@ function formatPostTime(postTime: string) {
   return postTime.toLowerCase().includes('ago') ? postTime : `${postTime} ago`;
 }
 
+function getCampaignActions(status: string | undefined, onSuspend: () => void) {
+  const normalizedStatus = status?.toLowerCase() ?? 'active';
+  const messageAction = {
+    label: 'Message Organizer',
+    icon: campaignActionIcons.message,
+  };
+  const suspendAction = {
+    label: 'Suspend Campaign',
+    icon: campaignActionIcons.suspend,
+    onClick: onSuspend,
+  };
+
+  if (normalizedStatus === 'active') {
+    return [messageAction, suspendAction];
+  }
+
+  if (normalizedStatus === 'requested') {
+    return [
+      {
+        label: 'Approve Campaign',
+        icon: campaignActionIcons.approve,
+      },
+      messageAction,
+      suspendAction,
+    ];
+  }
+
+  return [messageAction];
+}
+
 export function CampaignInfo({ campaign, author }: CampaignInfoProps) {
+  const [isSuspendDrawerOpen, setIsSuspendDrawerOpen] = useState(false);
   const mainCategory = getMainCategory(campaign.categories);
+  const campaignStatus = campaign.status ?? 'active';
 
   return (
     <div>
@@ -61,10 +103,16 @@ export function CampaignInfo({ campaign, author }: CampaignInfoProps) {
           name={author.name}
           meta={formatPostTime(campaign.postTime)}
         />
-        <MoreActionButton label="Delete Campaign" />
+        <MoreActionButton
+          items={getCampaignActions(campaignStatus, () => setIsSuspendDrawerOpen(true))}
+        />
       </div>
 
       <h1 className="mt-1 text-md-custom font-medium leading-6 text-text-primary">{campaign.title}</h1>
+
+      <div className="mt-2">
+        <CampaignStatusBadge status={campaignStatus} />
+      </div>
 
       <div className="mt-3">
         <CampaignProgress
@@ -80,6 +128,11 @@ export function CampaignInfo({ campaign, author }: CampaignInfoProps) {
         <CategoryTags categories={campaign.categories} />
         <FundraisingTeam members={campaign.fundraisingTeam} />
       </div>
+
+      <SuspendCampaignDrawer
+        isOpen={isSuspendDrawerOpen}
+        onClose={() => setIsSuspendDrawerOpen(false)}
+      />
     </div>
   );
 }

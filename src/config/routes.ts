@@ -9,6 +9,7 @@ export const ROUTES = {
   reporters: '/reporters',
   newsFeed: '/news-feed',
   campaigns: '/campaigns',
+  settings: '/settings',
   notFound: '*',
 } as const;
 

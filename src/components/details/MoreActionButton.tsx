@@ -2,11 +2,17 @@ import { useEffect, useRef, useState } from 'react';
 
 interface MoreActionButtonProps {
   label?: string;
+  items?: Array<{
+    label: string;
+    icon?: string;
+    onClick?: () => void;
+  }>;
 }
 
-export function MoreActionButton({ label = 'Delete Post' }: MoreActionButtonProps) {
+export function MoreActionButton({ label = 'Delete Post', items }: MoreActionButtonProps) {
   const [isOpen, setIsOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+  const menuItems = items ?? [{ label, icon: '/icons/table/delete.svg' }];
 
   useEffect(() => {
     if (!isOpen) return;
@@ -33,11 +39,21 @@ export function MoreActionButton({ label = 'Delete Post' }: MoreActionButtonProp
         <img src="/icons/profile/dots.svg" alt="" className="h-6 w-6 object-contain" />
       </button>
       {isOpen && (
-        <div className="absolute right-0 top-9 z-20 w-[200px] rounded-xl border border-[#DCE5EF] bg-white p-2 shadow-card">
-          <button type="button" className="flex w-full items-center gap-1 rounded-md px-3 py-2 text-left text-md-custom font-medium text-text-secondary">
-            <img src="/icons/table/delete.svg" alt="" className="h-7 w-7 object-contain" />
-            <span>{label}</span>
-          </button>
+        <div className="absolute right-0 top-9 z-20 w-[220px] rounded-xl border border-[#DCE5EF] bg-white p-2 shadow-card">
+          {menuItems.map((item) => (
+            <button
+              key={item.label}
+              type="button"
+              className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-md-custom font-medium text-text-secondary"
+              onClick={() => {
+                item.onClick?.();
+                setIsOpen(false);
+              }}
+            >
+              {item.icon && <img src={item.icon} alt="" className="h-6 w-6 object-contain" />}
+              <span>{item.label}</span>
+            </button>
+          ))}
         </div>
       )}
     </div>
