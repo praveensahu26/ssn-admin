@@ -125,11 +125,111 @@ export function DataTable<T extends { id: string; name?: string; profilePicture?
     }
   };
 
+  const renderCell = (row: T, col: ColumnConfig<T>) =>
+    col.render ? col.render(row) : (row[col.key as keyof T] as React.ReactNode);
+
+  const renderActionButtons = (row: T, align: 'start' | 'end' = 'end') => (
+    <div className={`flex items-center gap-2 ${align === 'end' ? 'justify-end' : 'justify-start'}`}>
+      {actions.map((act, aIdx) => {
+        const IconComp = act.icon;
+        const hasDetail = Boolean(act.detailContent);
+        const hasMenu = Boolean(act.menuItems?.length);
+        const popoverAlignment = align === 'start' ? 'left-0' : 'right-0';
+        const isDetailOpen =
+          activeDetail?.rowId === row.id && activeDetail.actionIndex === aIdx;
+
+        return (
+          <div
+            key={aIdx}
+            data-action-popover="true"
+            className="relative inline-flex items-center justify-center"
+            onMouseEnter={() => {
+              if (hasDetail && !hasMenu) {
+                setActiveDetail({ rowId: row.id, actionIndex: aIdx });
+              }
+            }}
+            onMouseLeave={() => {
+              if (hasDetail && !hasMenu) {
+                setActiveDetail(null);
+              }
+            }}
+          >
+            <button
+              onClick={() => {
+                act.onClick(row);
+                if (hasMenu) {
+                  setActiveDetail((current) =>
+                    current?.rowId === row.id && current.actionIndex === aIdx
+                      ? null
+                      : { rowId: row.id, actionIndex: aIdx }
+                  );
+                } else {
+                  setActiveDetail(null);
+                }
+              }}
+              onFocus={() => {
+                if (hasDetail && !hasMenu) {
+                  setActiveDetail({ rowId: row.id, actionIndex: aIdx });
+                }
+              }}
+              onBlur={() => {
+                if (hasDetail && !hasMenu) {
+                  setActiveDetail(null);
+                }
+              }}
+              className={`inline-flex h-9 w-9 items-center justify-center  bg-white text-text-secondary ${
+                act.className || ''
+              }`}
+              title={act.tooltip}
+              aria-expanded={hasDetail || hasMenu ? isDetailOpen : undefined}
+            >
+              <IconComp className="w-5 h-5 shrink-0" />
+            </button>
+
+            {hasMenu && isDetailOpen && (
+              <div className={`absolute ${popoverAlignment} top-[42px] z-20 w-[300px] max-w-[calc(100vw-32px)] rounded-xl border border-[#DCE5EF] bg-white py-4 text-left shadow-card`}>
+                {act.menuItems?.map((item, itemIdx) => (
+                  <button
+                    key={itemIdx}
+                    onClick={() => {
+                      item.onClick?.(row);
+                      setActiveDetail(null);
+                    }}
+                    className="flex w-full items-center gap-2 px-4 py-1 text-left text-md-custom font-medium leading-7 text-text-secondary"
+                  >
+                    <span className="flex h-5 w-5 shrink-0 items-center justify-center">
+                      {item.icon}
+                    </span>
+                    <span>{item.label}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {hasDetail && !hasMenu && isDetailOpen && (
+              <div className={`absolute ${popoverAlignment} top-[42px] z-20 w-[365px] max-w-[calc(100vw-32px)] rounded-[14px] bg-[#303030] px-5 py-4 text-left text-white shadow-xl`}>
+                <div className="flex items-start justify-between gap-4">
+                  <h3 className="text-lg-custom font-medium leading-6 text-white">
+                    {act.detailTitle?.(row) ?? act.tooltip ?? 'Info'}
+                  </h3>
+                  <IconComp className="mt-0.5 w-5 h-5 shrink-0 opacity-80" />
+                </div>
+                <div className="mt-3 whitespace-normal text-md-custom font-medium leading-6 text-white">
+                  {act.detailContent?.(row)}
+                </div>
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+
   return (
     <div className="w-full bg-white border border-[#DCE5EF] rounded-xl shadow-card overflow-visible font-poppins mb-2">
       {/* Top Header Section */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 border-b border-[#DCE5EF]">
-        <div className="flex items-center gap-3">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 p-4 border-b border-[#DCE5EF]">
+        <div className="flex min-w-0 flex-wrap items-center gap-3">
           <h2 className="text-subheading font-medium text-text-primary">{title}</h2>
           {label && (
             <span className="px-3 py-1 bg-[#E1EFFF] border border-[#DCE5EF] text-[#344054] text-sm-custom font-semibold rounded-md font-inter">
@@ -137,11 +237,12 @@ export function DataTable<T extends { id: string; name?: string; profilePicture?
             </span>
           )}
         </div>
-        <div className="flex items-center gap-4 flex-wrap sm:flex-nowrap">
+        <div className="flex w-full flex-col gap-3 sm:flex-row sm:items-center lg:w-auto lg:flex-nowrap">
           <SearchBar
             value={searchQuery}
             onChangeValue={handleSearchChange}
             placeholder={searchPlaceholder}
+            className="sm:max-w-[320px]"
           />
           <DownloadButton />
         </div>
@@ -163,7 +264,7 @@ export function DataTable<T extends { id: string; name?: string; profilePicture?
       )}
 
       {/* Table Section */}
-      <div className="w-full max-h-[calc(100vh-290px)] min-h-[240px] overflow-auto">
+      <div className="hidden w-full max-h-[calc(100vh-290px)] min-h-[240px] overflow-auto md:block">
         <table className="w-full text-left border-collapse">
           <thead className="sticky top-0 z-10">
             <tr className="border-b border-[#DCE5EF] bg-white">
@@ -254,7 +355,7 @@ export function DataTable<T extends { id: string; name?: string; profilePicture?
                     {/* Column values */}
                     {columns.map((col) => (
                       <td key={col.key} className="py-4 px-4 text-text-secondary text-md-custom text-nowrap">
-                        {col.render ? col.render(row) : (row[col.key as keyof T] as React.ReactNode)}
+                        {renderCell(row, col)}
                       </td>
                     ))}
 
@@ -264,95 +365,7 @@ export function DataTable<T extends { id: string; name?: string; profilePicture?
                         className="relative py-2 px-4 text-right whitespace-nowrap"
                         style={{ minWidth: `${Math.max(actions.length, 2) * 48 + 24}px` }}
                       >
-                        <div className="flex items-center justify-end gap-2">
-                          {actions.map((act, aIdx) => {
-                            const IconComp = act.icon;
-                            const hasDetail = Boolean(act.detailContent);
-                            const hasMenu = Boolean(act.menuItems?.length);
-                            const isDetailOpen =
-                              activeDetail?.rowId === row.id && activeDetail.actionIndex === aIdx;
-                            return (
-                              <div
-                                key={aIdx}
-                                data-action-popover="true"
-                                className="relative inline-flex items-center justify-center"
-                                onMouseEnter={() => {
-                                  if (hasDetail && !hasMenu) {
-                                    setActiveDetail({ rowId: row.id, actionIndex: aIdx });
-                                  }
-                                }}
-                                onMouseLeave={() => {
-                                  if (hasDetail && !hasMenu) {
-                                    setActiveDetail(null);
-                                  }
-                                }}
-                              >
-                                <button
-                                  onClick={() => {
-                                    act.onClick(row);
-                                    if (hasMenu) {
-                                      setActiveDetail((current) =>
-                                        current?.rowId === row.id && current.actionIndex === aIdx
-                                          ? null
-                                          : { rowId: row.id, actionIndex: aIdx }
-                                      );
-                                    } else {
-                                      setActiveDetail(null);
-                                    }
-                                  }}
-                                  onFocus={() => {
-                                    if (hasDetail && !hasMenu) {
-                                      setActiveDetail({ rowId: row.id, actionIndex: aIdx });
-                                    }
-                                  }}
-                                  onBlur={() => {
-                                    if (hasDetail && !hasMenu) {
-                                      setActiveDetail(null);
-                                    }
-                                  }}
-                                  className={`inline-flex items-center justify-center  ${act.className || ''
-                                    }`}
-                                  title={act.tooltip}
-                                  aria-expanded={hasDetail || hasMenu ? isDetailOpen : undefined}
-                                >
-                                  <IconComp className="w-5 h-5 shrink-0" />
-                                </button>
-                                {hasMenu && isDetailOpen && (
-                                  <div className="absolute right-0 top-[34px] z-20 w-[300px] max-w-[calc(100vw-32px)] rounded-xl border border-[#DCE5EF] bg-white py-4 text-left shadow-card">
-                                    {act.menuItems?.map((item, itemIdx) => (
-                                      <button
-                                        key={itemIdx}
-                                        onClick={() => {
-                                          item.onClick?.(row);
-                                          setActiveDetail(null);
-                                        }}
-                                        className="flex w-full items-center gap-2 px-4 py-1 text-left text-md-custom font-medium leading-7 text-text-secondary"
-                                      >
-                                        <span className="flex h-5 w-5 shrink-0 items-center justify-center">
-                                          {item.icon}
-                                        </span>
-                                        <span>{item.label}</span>
-                                      </button>
-                                    ))}
-                                  </div>
-                                )}
-                                {hasDetail && !hasMenu && isDetailOpen && (
-                                  <div className="absolute right-4 top-[42px] z-20 w-[365px] max-w-[calc(100vw-32px)] rounded-[14px] bg-[#303030] px-5 py-4 text-left text-white shadow-xl">
-                                    <div className="flex items-start justify-between gap-4">
-                                      <h3 className="text-lg-custom font-medium leading-6 text-white">
-                                        {act.detailTitle?.(row) ?? act.tooltip ?? 'Info'}
-                                      </h3>
-                                      <IconComp className="mt-0.5 w-5 h-5 shrink-0 opacity-80" />
-                                    </div>
-                                    <div className="mt-3 whitespace-normal text-md-custom font-medium leading-6 text-white">
-                                      {act.detailContent?.(row)}
-                                    </div>
-                                  </div>
-                                )}
-                              </div>
-                            );
-                          })}
-                        </div>
+                        {renderActionButtons(row)}
                       </td>
                     )}
                   </tr>
@@ -361,6 +374,82 @@ export function DataTable<T extends { id: string; name?: string; profilePicture?
             )}
           </tbody>
         </table>
+      </div>
+
+      {/* Mobile Card Section */}
+      <div className="grid min-h-[240px] gap-3 p-3 md:hidden">
+        {paginatedData.length === 0 ? (
+          <div className="flex min-h-[180px] items-center justify-center rounded-lg border border-dashed border-[#DCE5EF] px-4 text-center text-md-custom text-text-secondary">
+            No data found
+          </div>
+        ) : (
+          paginatedData.map((row) => {
+            const isSelected = selectedIds.includes(row.id);
+            const [primaryColumn, ...detailColumns] = columns;
+
+            return (
+              <article
+                key={row.id}
+                className={`rounded-lg border border-[#DCE5EF] bg-white p-4 shadow-[0_2px_10px_rgba(15,23,42,0.04)] ${
+                  isSelected ? 'ring-1 ring-btn-primary' : ''
+                }`}
+              >
+                <div className="flex items-start gap-3">
+                  <button
+                    onClick={() => toggleSelectRow(row.id)}
+                    className={`mt-2 flex h-5 w-5 shrink-0 items-center justify-center rounded-md border transition-all ${
+                      isSelected
+                        ? 'border-btn-primary bg-btn-primary text-white'
+                        : 'border-[#6A7A8C] bg-white text-[#6A7A8C]'
+                    }`}
+                    aria-label={`Select row ${row.name || row.id}`}
+                  >
+                    <svg
+                      className="w-3.5 h-3.5"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="3.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                  </button>
+
+                  <div className="min-w-0 flex-1">
+                    {primaryColumn && (
+                      <div className="min-w-0 text-md-custom text-text-primary">
+                        {renderCell(row, primaryColumn)}
+                      </div>
+                    )}
+
+                    <dl className="mt-4 grid gap-3">
+                      {detailColumns.map((col) => (
+                        <div key={col.key} className="grid grid-cols-[112px_minmax(0,1fr)] gap-3">
+                          <dt className="text-sm-custom font-medium text-text-secondary">
+                            {col.header}
+                          </dt>
+                          <dd className="min-w-0 text-right text-sm-custom font-medium text-text-primary">
+                            <div className="inline-flex max-w-full justify-end break-words">
+                              {renderCell(row, col)}
+                            </div>
+                          </dd>
+                        </div>
+                      ))}
+                    </dl>
+
+                    {actions.length > 0 && (
+                      <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-[#DCE5EF] pt-3">
+                        {renderActionButtons(row, 'start')}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </article>
+            );
+          })
+        )}
       </div>
 
       {/* Pagination Section */}
