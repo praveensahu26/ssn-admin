@@ -1,4 +1,5 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import MainLayout from '@/components/layout/MainLayout';
 import NewsFeedCard, { type NewsFeedPost } from '@/components/news-feed/NewsFeedCard';
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -63,6 +64,10 @@ function normalizeCategory(category: string) {
   return 'Home';
 }
 
+function isNewsCategory(value: string | null): value is string {
+  return Boolean(value && categories.includes(value));
+}
+
 function buildFeedPosts(accounts: DummyAccount[]): NewsFeedPost[] {
   return accounts.flatMap((account) =>
     (account.posts ?? []).map((post) => {
@@ -86,8 +91,24 @@ function buildFeedPosts(accounts: DummyAccount[]): NewsFeedPost[] {
 }
 
 export function NewsFeedPage() {
-  const [activeCategory, setActiveCategory] = useState('Home');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [activeCategory, setActiveCategory] = useState(() => {
+    const category = searchParams.get('category');
+
+    return isNewsCategory(category) ? category : 'Home';
+  });
   const posts = useMemo(() => buildFeedPosts(dummyData as DummyAccount[]), []);
+
+  useEffect(() => {
+    const category = searchParams.get('category');
+
+    setActiveCategory(isNewsCategory(category) ? category : 'Home');
+  }, [searchParams]);
+
+  function handleCategoryChange(category: string) {
+    setActiveCategory(category);
+    setSearchParams(category === 'Home' ? {} : { category });
+  }
 
   const filteredPosts = useMemo(() => {
     if (activeCategory === 'Home') return posts;
@@ -129,7 +150,7 @@ export function NewsFeedPage() {
                     ? 'border-btn-primary bg-btn-primary text-white'
                     : 'border-[#DCE5EF] bg-white text-text-secondary'
                 }`}
-                onClick={() => setActiveCategory(category)}
+                onClick={() => handleCategoryChange(category)}
               >
                 {category}
               </button>

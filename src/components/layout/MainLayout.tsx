@@ -157,9 +157,9 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
       </aside>
 
       {/* Main Content Area */}
-      <div className="min-w-0 flex-1 overflow-x-hidden pl-[230px]">
+      <div className="min-w-0 flex-1 overflow-hidden pl-[230px]">
         {/* Header */}
-        <header className="h-[70px] bg-white border-b border-[#DCE5EF] flex items-center justify-between px-8 sticky top-0 z-10">
+        <header className="sticky top-0 z-30 h-[70px] bg-white border-b border-[#DCE5EF] flex items-center justify-between px-8">
           <div>
             {/* Left side empty or matching the header design */}
           </div>
@@ -194,7 +194,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
                 </span>
               </div>
               <img
-                src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=100&h=100&q=80"
+                src="/assets/notFound.png"
                 alt="User Profile"
                 className="w-10 h-10 rounded-full object-cover border-2 border-white cursor-pointer"
                 onClick={() => setProfileMenuOpen((prev) => !prev)}
@@ -227,7 +227,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
         </header>
 
         {/* Inner Content Area */}
-        <main className="min-h-[calc(100vh-70px)] overflow-x-hidden bg-[#F4F7FC] p-8 pt-4">
+        <main className="h-[calc(100vh-70px)] overflow-y-auto overflow-x-hidden bg-[#F4F7FC] p-8 pt-4">
           {children}
         </main>
       </div>

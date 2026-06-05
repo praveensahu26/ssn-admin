@@ -1,13 +1,29 @@
+import { useEffect, useState } from 'react';
+
 interface ProfileCoverProps {
-  coverImage: string;
+  coverImage?: string;
   name: string;
   onBack: () => void;
 }
 
-export function ProfileCover({ coverImage, name, onBack }: ProfileCoverProps) {
+export function ProfileCover({ coverImage, onBack }: ProfileCoverProps) {
+  const [coverImageError, setCoverImageError] = useState(false);
+  const showCoverImage = Boolean(coverImage) && !coverImageError;
+
+  useEffect(() => {
+    setCoverImageError(false);
+  }, [coverImage]);
+
   return (
     <div className="relative h-[240px] w-full overflow-hidden rounded-t-lg bg-[#DCE5EF]">
-      <img src={coverImage} alt={`${name} cover`} className="h-full w-full object-cover" />
+      {showCoverImage && (
+        <img
+          src={coverImage}
+          alt=""
+          className="h-full w-full object-cover"
+          onError={() => setCoverImageError(true)}
+        />
+      )}
       <button
         type="button"
         onClick={onBack}

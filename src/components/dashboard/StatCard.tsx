@@ -22,11 +22,11 @@ export const StatCard: React.FC<StatCardProps> = ({
   className = '',
 }) => {
   return (
-    <div className={`bg-white w-full h-[206px] border border-[#DCE5EF] rounded-xl p-4 shadow-card flex flex-col justify-between ${className}`}>
+    <div className={`bg-white w-full h-[206px] border border-[#DCE5EF] rounded-xl p-4 pr-2 shadow-card  flex flex-col justify-between ${className}`}>
       {/* Top Header */}
       <div className="flex justify-between items-start mb-4">
         <h3 className="text-subheading font-medium text-text-primary font-poppins">{title}</h3>
-        <span className="bg-[#CBF5E5] text-[#176448] font-semibold text-sm-custom px-2.5 py-1 rounded-xl flex items-center justify-center font-poppins">
+        <span className="bg-[#CBF5E5] text-[#176448] font-semibold text-sm-custom px-2.5 py-1 rounded-xl flex items-center justify-center font-poppins mr-5">
           {change}
         </span>
       </div>

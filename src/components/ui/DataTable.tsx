@@ -163,9 +163,9 @@ export function DataTable<T extends { id: string; name?: string; profilePicture?
       )}
 
       {/* Table Section */}
-      <div className="w-full overflow-x-auto">
+      <div className="w-full max-h-[calc(100vh-290px)] min-h-[240px] overflow-auto">
         <table className="w-full text-left border-collapse">
-          <thead>
+          <thead className="sticky top-0 z-10">
             <tr className="border-b border-[#DCE5EF] bg-white">
               {/* Checkbox column */}
               <th className="py-4 pl-6 pr-4 w-[60px]">
