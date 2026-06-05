@@ -98,8 +98,8 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   };
 
   const renderSidebarContent = (compact = false) => (
-    <>
-      <div>
+    <div className="flex h-full min-h-0 flex-col justify-between gap-6">
+      <div className="min-h-0 overflow-y-auto overflow-x-hidden">
         {/* Logo Section */}
         <button
           type="button"
@@ -143,7 +143,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
       </div>
 
       {/* Logout Section */}
-      <div className="border-t border-[#DCE5EF] pt-6">
+      <div className="shrink-0 border-t border-[#DCE5EF] pt-6">
         <button
           onClick={handleLogout}
           title={compact ? 'Logout' : undefined}
@@ -160,7 +160,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
           {!compact && <span>Logout</span>}
         </button>
       </div>
-    </>
+    </div>
   );
 
   return (
@@ -192,9 +192,9 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
       </aside>
 
       {/* Desktop / Tablet Sidebar */}
-      <aside className="fixed left-0 top-0 z-20 hidden h-full flex-col justify-between border-r border-[#DCE5EF] bg-white p-4 md:flex md:w-[76px] xl:w-[236px] xl:p-6">
-        <div className="xl:hidden contents">{renderSidebarContent(true)}</div>
-        <div className="hidden xl:contents">{renderSidebarContent(false)}</div>
+      <aside className="fixed left-0 top-0 z-20 hidden h-[calc(100dvh-24px)] flex-col overflow-hidden border-r border-[#DCE5EF] bg-white p-4 md:flex md:w-[76px] xl:w-[236px] xl:p-6">
+        <div className="h-full min-h-0 xl:hidden">{renderSidebarContent(true)}</div>
+        <div className="hidden h-full min-h-0 xl:block">{renderSidebarContent(false)}</div>
       </aside>
 
       {/* Main Content Area */}
