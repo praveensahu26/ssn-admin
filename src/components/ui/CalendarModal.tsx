@@ -333,24 +333,23 @@ const CalendarModal: React.FC<CalendarModalProps> = ({
       {/* Modal */}
       <div
         ref={modalRef}
-        className="fixed z-50 bg-white rounded-xl shadow-card border border-[#DCE5EF] flex overflow-hidden"
+        className={`fixed right-3 z-50 flex w-[min(328px,calc(100vw-24px))] flex-col overflow-hidden rounded-xl border border-[#DCE5EF] bg-white shadow-card sm:right-6 sm:w-auto sm:flex-row ${
+          hideQuickOptions ? 'sm:min-w-[360px] sm:max-w-[390px]' : 'sm:min-w-[520px] sm:max-w-[560px]'
+        }`}
         style={{
           top: '72px',
-          right: '24px',
-          minWidth: hideQuickOptions ? '360px' : '520px',
-          maxWidth: hideQuickOptions ? '390px' : '560px',
         }}
         role="dialog"
         aria-modal="true"
         aria-label="Date range picker"
       >
         {/* ── Left panel ── */}
-        {!hideQuickOptions && <div className="flex flex-col gap-1 px-5 py-6 border-r border-[#DCE5EF] min-w-[160px] bg-white">
+        {!hideQuickOptions && <div className="no-scrollbar flex gap-1 overflow-x-auto border-b border-[#DCE5EF] bg-white px-4 py-3 sm:min-w-[160px] sm:flex-col sm:overflow-visible sm:border-b-0 sm:border-r sm:px-5 sm:py-6">
           {QUICK_OPTIONS.map((opt) => (
             <button
               key={opt}
               onClick={() => handleOptionClick(opt)}
-              className={`text-left px-3 py-2 rounded-lg text-[13.5px] font-poppins font-medium transition-all duration-150 ${selectedOption === opt
+              className={`shrink-0 rounded-lg px-3 py-2 text-left font-poppins text-[13px] font-medium transition-all duration-150 sm:text-[13.5px] ${selectedOption === opt
                 ? 'text-[#007AFF] bg-[#EAF3FF]'
                 : 'text-[#4A5568] hover:text-[#007AFF] hover:bg-[#F5F9FF]'
                 }`}
@@ -361,7 +360,7 @@ const CalendarModal: React.FC<CalendarModalProps> = ({
         </div>}
 
         {/* ── Right panel ── */}
-        <div className="flex flex-col flex-1 px-5 py-5">
+        <div className="flex flex-1 flex-col px-4 py-4 sm:px-5 sm:py-5">
           {/* Month header */}
           <div className="flex items-center justify-between mb-4">
             <button
@@ -375,7 +374,7 @@ const CalendarModal: React.FC<CalendarModalProps> = ({
               <ArrowLeft />
             </button>
 
-            <span className="text-base-custom font-medium text-text-secondary font-poppins tracking-tight">
+            <span className="text-md-custom font-medium text-text-secondary font-poppins tracking-tight sm:text-base-custom">
               {MONTH_NAMES[viewMonth]} {viewYear}
             </span>
 

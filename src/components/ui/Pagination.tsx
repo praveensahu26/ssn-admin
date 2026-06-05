@@ -26,8 +26,8 @@ export const Pagination: React.FC<PaginationProps> = ({
   }
 
   return (
-    <div className="flex flex-col sm:flex-row items-center justify-end gap-4 px-6 py-4 bg-white border-t border-[#DCE5EF] font-poppins">
-      <div className="flex items-center gap-1.5">
+    <div className="flex flex-col sm:flex-row items-center justify-end gap-4 px-4 sm:px-6 py-4 bg-white border-t border-[#DCE5EF] font-poppins">
+      <div className="flex w-full items-center gap-1.5 overflow-x-auto pb-1 sm:w-auto sm:justify-end">
         <button
           onClick={() => onPageChange(currentPage - 1)}
           disabled={currentPage === 1}

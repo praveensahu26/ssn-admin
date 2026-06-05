@@ -137,28 +137,26 @@ const NotificationModal: React.FC<NotificationModalProps> = ({
         role="dialog"
         aria-modal="true"
         aria-label="Notifications"
-        className="fixed z-50 bg-white rounded-xl border border-[#DCE5EF] shadow-card overflow-hidden"
+        className="fixed right-3 z-50 w-[min(320px,calc(100vw-24px))] overflow-hidden rounded-xl border border-[#DCE5EF] bg-white shadow-card sm:right-6 sm:w-[380px] lg:right-[30px] lg:w-[457px]"
         style={{
           top: '78px',
-          right: '30px',
-          width: '457px',
         }}
       >
 
 
         {/* Header */}
-        <div className="px-5 pt-4 pb-2">
+        <div className="px-4 pt-4 pb-2 sm:px-5">
           <h2 className="text-[18px] font-medium text-text-primary font-poppins">
             Notifications
           </h2>
         </div>
 
         {/* Notification list */}
-        <div className="overflow-y-auto max-h-[480px] no-scrollbar">
+        <div className="no-scrollbar max-h-[420px] overflow-y-auto sm:max-h-[480px]">
           {NOTIFICATIONS.map((group, gi) => (
             <div key={gi}>
               {/* Group label */}
-              <div className="px-5 py-2">
+              <div className="px-4 py-2 sm:px-5">
                 <span className="text-xs-custom font-medium text-text-secondary font-poppins">
                   {group.label}
                 </span>
@@ -169,9 +167,9 @@ const NotificationModal: React.FC<NotificationModalProps> = ({
                 const IconComp = iconMap[notif.icon];
                 return (
                   <div key={notif.id}>
-                    <div className="flex items-start gap-3 px-5 py-3">
+                    <div className="flex items-start gap-3 px-4 py-3 sm:px-5">
                       {/* Icon bubble */}
-                      <div className="w-10 h-10 rounded-full bg-[#F4F7FC] border border-[#DCE5EF] flex items-center justify-center flex-shrink-0 mt-0.5">
+                      <div className="mt-0.5 flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full border border-[#DCE5EF] bg-[#F4F7FC] sm:h-10 sm:w-10">
                         <IconComp />
                       </div>
 
@@ -196,7 +194,7 @@ const NotificationModal: React.FC<NotificationModalProps> = ({
 
                     {/* Divider — not after last item in last group */}
                     {!(gi === NOTIFICATIONS.length - 1 && ni === group.items.length - 1) && (
-                      <div className="mx-5 border-b border-[#DCE5EF]" />
+                      <div className="mx-4 border-b border-[#DCE5EF] sm:mx-5" />
                     )}
                   </div>
                 );
@@ -206,7 +204,7 @@ const NotificationModal: React.FC<NotificationModalProps> = ({
         </div>
 
         {/* Load more */}
-        <div className="px-5 py-3 border-t border-[#DCE5EF]">
+        <div className="border-t border-[#DCE5EF] px-4 py-3 sm:px-5">
           <button className="flex items-center gap-1.5 text-md-custom font-medium text-text-primary font-poppins">
             Load more
             <ChevronDown size={16} />

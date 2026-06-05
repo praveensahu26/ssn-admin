@@ -14,7 +14,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({
   ...props
 }) => {
   return (
-    <div className={`relative flex items-center w-full max-w-[320px] ${className}`}>
+    <div className={`relative flex w-full items-center ${className}`}>
       <img
         src="/icons/table/search.svg"
         alt="search"
