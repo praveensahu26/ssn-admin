@@ -61,6 +61,20 @@ function formatStateCountry(location?: string) {
   return locationParts.length >= 2 ? locationParts.slice(-2).join(', ') : location;
 }
 
+function getInitials(name: string): string {
+  if (!name) return '??';
+
+  const parts = name.trim().split(/\s+/);
+  if (parts.length >= 2) {
+    const first = parts[0]?.charAt(0) ?? '';
+    const second = parts[1]?.charAt(0) ?? '';
+
+    return (first + second).toUpperCase() || '??';
+  }
+
+  return (parts[0] ?? '').slice(0, 2).toUpperCase() || '??';
+}
+
 function SvgIcon({ src, alt }: { src: string; alt: string }) {
   return <img src={src} alt={alt} className="h-5 w-5 object-contain" />;
 }
@@ -111,16 +125,18 @@ export function ProfileDetailsLayout({ profile, detailsBasePath, onBack }: Profi
   const [isMessageDrawerOpen, setIsMessageDrawerOpen] = useState(false);
   const [isReportsDrawerOpen, setIsReportsDrawerOpen] = useState(false);
   const [moderationAction, setModerationAction] = useState<ModerationActionType | null>(null);
+  const [profileImageError, setProfileImageError] = useState(false);
   const [connectionsDrawer, setConnectionsDrawer] = useState<{
     title: 'Followers' | 'Following';
     data: ConnectionProfile[];
   } | null>(null);
   const actionsRef = useRef<HTMLDivElement>(null);
-  const coverImage = profile.coverImage ?? '/icons/logo.svg';
-  const profilePicture = profile.profilePicture ?? '/icons/logo.svg';
+  const coverImage = profile.coverImage;
+  const profileInitials = getInitials(profile.name);
   const statusBanner = getProfileStatusBanner(profile);
   const isSuspended = profile.status?.value === 'suspended';
   const profileRole = location.pathname.startsWith('/reporters') ? 'reporter' : 'user';
+  const showProfileImage = Boolean(profile.profilePicture) && !profileImageError;
 
   function updateProfileView(updates: {
     tab?: 'posts' | 'campaigns';
@@ -174,6 +190,10 @@ export function ProfileDetailsLayout({ profile, detailsBasePath, onBack }: Profi
     };
   }, [isActionsOpen]);
 
+  useEffect(() => {
+    setProfileImageError(false);
+  }, [profile.profilePicture]);
+
   return (
     <>
       {statusBanner && (
@@ -207,11 +227,18 @@ export function ProfileDetailsLayout({ profile, detailsBasePath, onBack }: Profi
         <div className="px-4 pb-5 sm:px-5">
           <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
             <div className="flex flex-col">
-              <img
-                src={profilePicture}
-                alt={profile.name}
-                className="relative z-[1] -mt-20 h-[160px] w-[160px] rounded-full border-2 border-white object-cover"
-              />
+              {showProfileImage ? (
+                <img
+                  src={profile.profilePicture}
+                  alt={profile.name}
+                  className="relative z-[1] -mt-20 h-[160px] w-[160px] rounded-full border-2 border-white object-cover"
+                  onError={() => setProfileImageError(true)}
+                />
+              ) : (
+                <div className="relative z-[1] -mt-20 flex h-[160px] w-[160px] items-center justify-center rounded-full border-2 border-white bg-[#F1F5F9] font-poppins text-[70px] font-semibold text-text-secondary">
+                  {profileInitials}
+                </div>
+              )}
               <div className="mt-7">
                 <div className="flex items-center gap-2">
                   <h1 className="text-heading font-semibold leading-8 text-text-primary">{profile.name}</h1>
@@ -359,6 +386,7 @@ export function ProfileDetailsLayout({ profile, detailsBasePath, onBack }: Profi
         totalReports={profile.reportCount || 108}
         onClose={() => setIsReportsDrawerOpen(false)}
         onModerationAction={setModerationAction}
+        isCovered={Boolean(moderationAction)}
       />
       {moderationAction && (
         <ModerationActionDrawer

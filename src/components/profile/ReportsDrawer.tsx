@@ -7,6 +7,7 @@ interface ReportsDrawerProps {
   totalReports?: number;
   onClose: () => void;
   onModerationAction: (action: ModerationActionType) => void;
+  isCovered?: boolean;
 }
 
 const reportReasons = [
@@ -25,11 +26,14 @@ export default function ReportsDrawer({
   totalReports = 108,
   onClose,
   onModerationAction,
+  isCovered = false,
 }: ReportsDrawerProps) {
   useEffect(() => {
     if (!isOpen) return;
 
     function handleKeyDown(event: KeyboardEvent) {
+      if (isCovered) return;
+
       if (event.key === 'Escape') {
         onClose();
       }
@@ -42,10 +46,9 @@ export default function ReportsDrawer({
       document.body.style.overflow = '';
       document.removeEventListener('keydown', handleKeyDown);
     };
-  }, [isOpen, onClose]);
+  }, [isCovered, isOpen, onClose]);
 
   function handleAction(action: ModerationActionType) {
-    onClose();
     onModerationAction(action);
   }
 

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import CategoryTags, { CategoryBadge } from '@/components/details/CategoryTags';
 import DescriptionSection from '@/components/details/DescriptionSection';
 import LocationInfo from '@/components/details/LocationInfo';
@@ -9,6 +10,7 @@ import CampaignProgress from '@/components/campaigns/CampaignProgress';
 import FundraisingTeam from '@/components/campaigns/FundraisingTeam';
 import CampaignStatusBadge from '@/components/campaigns/CampaignStatusBadge';
 import SuspendCampaignDrawer from '@/components/campaigns/SuspendCampaignDrawer';
+import { ROUTES } from '@/config/routes';
 
 const campaignActionIcons = {
   message: '/icons/profile/message.svg',
@@ -84,8 +86,10 @@ function getCampaignActions(status: string | undefined, onSuspend: () => void) {
 
 export function CampaignInfo({ campaign, author }: CampaignInfoProps) {
   const [isSuspendDrawerOpen, setIsSuspendDrawerOpen] = useState(false);
+  const location = useLocation();
   const mainCategory = getMainCategory(campaign.categories);
   const campaignStatus = campaign.status ?? 'active';
+  const showStatusBadge = location.pathname.startsWith(ROUTES.campaigns);
 
   return (
     <div>
@@ -110,15 +114,18 @@ export function CampaignInfo({ campaign, author }: CampaignInfoProps) {
 
       <h1 className="mt-1 text-md-custom font-medium leading-6 text-text-primary">{campaign.title}</h1>
 
-      <div className="mt-2">
-        <CampaignStatusBadge status={campaignStatus} />
-      </div>
+      {showStatusBadge && (
+        <div className="mt-2">
+          <CampaignStatusBadge status={campaignStatus} />
+        </div>
+      )}
 
       <div className="mt-3">
         <CampaignProgress
           raisedAmount={campaign.raisedAmount}
           donationCount={campaign.donationCount}
           amountGoal={campaign.amountGoal}
+          status={campaignStatus}
         />
       </div>
 

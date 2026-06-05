@@ -140,7 +140,7 @@ const NotificationModal: React.FC<NotificationModalProps> = ({
         className="fixed z-50 bg-white rounded-xl border border-[#DCE5EF] shadow-card overflow-hidden"
         style={{
           top: '78px',
-          right: '88px',
+          right: '30px',
           width: '457px',
         }}
       >

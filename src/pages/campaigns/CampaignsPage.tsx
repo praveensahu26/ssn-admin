@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import MainLayout from '@/components/layout/MainLayout';
 import StatCard from '@/components/dashboard/StatCard';
 import CampaignCard from '@/components/campaigns/CampaignCard';
@@ -33,6 +34,7 @@ const campaignStats = [
 const PAGE_SIZE = 8;
 
 type CampaignTab = 'overview' | 'active' | 'completed' | 'requested' | 'suspended';
+const campaignTabs: CampaignTab[] = ['overview', 'active', 'completed', 'requested', 'suspended'];
 
 interface CampaignAuthor {
   name: string;
@@ -55,8 +57,17 @@ interface GlobalCampaign {
 
 const campaignsData = globalCampaigns as GlobalCampaign[];
 
+function isCampaignTab(value: string | null): value is CampaignTab {
+  return Boolean(value && campaignTabs.includes(value as CampaignTab));
+}
+
 export function CampaignsPage() {
-  const [activeTab, setActiveTab] = useState<CampaignTab>('overview');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [activeTab, setActiveTab] = useState<CampaignTab>(() => {
+    const tab = searchParams.get('tab');
+
+    return isCampaignTab(tab) ? tab : 'overview';
+  });
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const loadMoreRef = useRef<HTMLDivElement>(null);
 
@@ -64,6 +75,14 @@ export function CampaignsPage() {
     () => applyCampaignDisplayStatuses(campaignsData),
     []
   );
+
+  useEffect(() => {
+    const tab = searchParams.get('tab');
+    const nextTab = isCampaignTab(tab) ? tab : 'overview';
+
+    setActiveTab(nextTab);
+    setVisibleCount(PAGE_SIZE);
+  }, [searchParams]);
 
   const filteredCampaigns = useMemo(() => {
     if (activeTab === 'overview') return campaignsWithStatuses;
@@ -77,6 +96,7 @@ export function CampaignsPage() {
   function handleTabChange(tab: CampaignTab) {
     setActiveTab(tab);
     setVisibleCount(PAGE_SIZE);
+    setSearchParams(tab === 'overview' ? {} : { tab });
   }
 
   useEffect(() => {
