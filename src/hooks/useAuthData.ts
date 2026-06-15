@@ -7,9 +7,11 @@ import {
   useState,
   type ReactNode,
 } from 'react';
-
-const USER_STORAGE_KEY = 'ssn.auth.user';
-const AUTH_STORAGE_KEY = 'ssn.auth.token';
+import {
+  ACCESS_TOKEN_STORAGE_KEY,
+  REFRESH_TOKEN_STORAGE_KEY,
+  USER_STORAGE_KEY,
+} from '@/services/authStorage';
 
 export interface AuthUser {
   id: string;
@@ -22,7 +24,7 @@ interface AuthContextValue {
   user: AuthUser | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (user: AuthUser, token: string) => void;
+  login: (user: AuthUser, accessToken: string, refreshToken?: string) => void;
   logout: () => void;
   updateUser: (patch: Partial<AuthUser>) => void;
 }
@@ -40,19 +42,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   });
 
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
-    return !!localStorage.getItem(AUTH_STORAGE_KEY);
+    return !!localStorage.getItem(ACCESS_TOKEN_STORAGE_KEY);
   });
 
-  const login = useCallback((userData: AuthUser, token: string) => {
+  const login = useCallback((userData: AuthUser, accessToken: string, refreshToken?: string) => {
     localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(userData));
-    localStorage.setItem(AUTH_STORAGE_KEY, token);
+    localStorage.setItem(ACCESS_TOKEN_STORAGE_KEY, accessToken);
+    if (refreshToken) {
+      localStorage.setItem(REFRESH_TOKEN_STORAGE_KEY, refreshToken);
+    }
     setUser(userData);
     setIsAuthenticated(true);
   }, []);
 
   const logout = useCallback(() => {
     localStorage.removeItem(USER_STORAGE_KEY);
-    localStorage.removeItem(AUTH_STORAGE_KEY);
+    localStorage.removeItem(ACCESS_TOKEN_STORAGE_KEY);
+    localStorage.removeItem(REFRESH_TOKEN_STORAGE_KEY);
     setUser(null);
     setIsAuthenticated(false);
   }, []);
@@ -88,3 +94,4 @@ export function useAuthData() {
   }
   return context;
 }
+

@@ -5,15 +5,13 @@ import { useNavigate } from 'react-router-dom';
 import { Lock, Eye, EyeOff } from 'lucide-react';
 import { AuthLayout } from '@/components/layout/AuthLayout';
 import { ROUTES } from '@/config/routes';
-import { toast } from 'sonner';
+import { toast } from '@/lib/toast';
+import { authServices } from '@/services/authServices';
+import { RESET_EMAIL_STORAGE_KEY } from '@/services/authStorage';
 
 const ResetPasswordSchema = Yup.object().shape({
   password: Yup.string()
     .min(8, 'Password must be at least 8 characters')
-    .matches(/[A-Z]/, 'Password must contain at least one uppercase letter')
-    .matches(/[a-z]/, 'Password must contain at least one lowercase letter')
-    .matches(/[0-9]/, 'Password must contain at least one number')
-    .matches(/[^A-Za-z0-9]/, 'Password must contain at least one special character')
     .required('New Password is required'),
   confirmPassword: Yup.string()
     .oneOf([Yup.ref('password')], 'Passwords must match')
@@ -31,18 +29,36 @@ const ResetPasswordPage: React.FC = () => {
       confirmPassword: '',
     },
     validationSchema: ResetPasswordSchema,
-    onSubmit: () => {
+    onSubmit: async (values, helpers) => {
+      const email = localStorage.getItem(RESET_EMAIL_STORAGE_KEY);
 
-      toast.success('Password has been reset successfully!');
-      // Dummy success logic - just navigate to login since no API integration is requested
-      navigate(ROUTES.login);
+      if (!email) {
+        toast.error('Please verify your email first.');
+        navigate(ROUTES.forgotPassword);
+        helpers.setSubmitting(false);
+        return;
+      }
+
+      try {
+        const response = await authServices.resetPassword({
+          email,
+          password: values.password,
+          confirmPassword: values.confirmPassword,
+        });
+        localStorage.removeItem(RESET_EMAIL_STORAGE_KEY);
+        toast.success(response.message || 'Password has been reset successfully');
+        navigate(ROUTES.login);
+      } catch (error) {
+        toast.error(error instanceof Error ? error.message : 'Password reset failed');
+      } finally {
+        helpers.setSubmitting(false);
+      }
     },
   });
 
   return (
     <AuthLayout>
       <div className="w-full">
-        {/* Header */}
         <div className="mb-8">
           <h1 className="text-heading font-semibold  text-text-primary mb-2">
             Create a New Password
@@ -52,9 +68,7 @@ const ResetPasswordPage: React.FC = () => {
           </p>
         </div>
 
-        {/* Form */}
         <form onSubmit={formik.handleSubmit} className="space-y-6">
-          {/* New Password Field */}
           <div>
             <label
               htmlFor="password"
@@ -98,7 +112,6 @@ const ResetPasswordPage: React.FC = () => {
             )}
           </div>
 
-          {/* Confirm Password Field */}
           <div>
             <label
               htmlFor="confirmPassword"
@@ -142,12 +155,12 @@ const ResetPasswordPage: React.FC = () => {
             )}
           </div>
 
-          {/* Reset Password Button */}
           <button
             type="submit"
-            className="w-full py-4 px-6 bg-btn-primary text-white font-medium rounded-lg  text-md-custom"
+            disabled={formik.isSubmitting}
+            className="w-full py-4 px-6 bg-btn-primary text-white font-medium rounded-lg  text-md-custom disabled:cursor-not-allowed disabled:opacity-70"
           >
-            Reset Password
+            {formik.isSubmitting ? 'Resetting...' : 'Reset Password'}
           </button>
         </form>
       </div>

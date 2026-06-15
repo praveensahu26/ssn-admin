@@ -5,11 +5,12 @@ import { useNavigate } from 'react-router-dom';
 import { Mail } from 'lucide-react';
 import { AuthLayout } from '@/components/layout/AuthLayout';
 import { ROUTES } from '@/config/routes';
+import { toast } from '@/lib/toast';
+import { authServices } from '@/services/authServices';
+import { RESET_EMAIL_STORAGE_KEY } from '@/services/authStorage';
 
 const ForgotPasswordSchema = Yup.object().shape({
-  email: Yup.string()
-    .email('Invalid email address')
-    .required('Email is required'),
+  email: Yup.string().email('Invalid email address').required('Email is required'),
 });
 
 const ForgotPasswordPage: React.FC = () => {
@@ -20,17 +21,23 @@ const ForgotPasswordPage: React.FC = () => {
       email: '',
     },
     validationSchema: ForgotPasswordSchema,
-    onSubmit: () => {
-
-      // Dummy success logic - just navigate to verify email since no API integration is requested
-      navigate(ROUTES.verifyEmail);
+    onSubmit: async (values, helpers) => {
+      try {
+        const response = await authServices.forgotPassword({ email: values.email });
+        localStorage.setItem(RESET_EMAIL_STORAGE_KEY, values.email);
+        toast.success(response.message || 'Password reset email sent successfully');
+        navigate(ROUTES.verifyEmail);
+      } catch (error) {
+        toast.error(error instanceof Error ? error.message : 'Unable to send reset email');
+      } finally {
+        helpers.setSubmitting(false);
+      }
     },
   });
 
   return (
     <AuthLayout>
       <div className="w-full">
-        {/* Header */}
         <div className="mb-8">
           <h1 className="text-heading font-semibold  text-text-primary mb-2">
             Forgot Password?
@@ -40,9 +47,7 @@ const ForgotPasswordPage: React.FC = () => {
           </p>
         </div>
 
-        {/* Form */}
         <form onSubmit={formik.handleSubmit} className="space-y-6">
-          {/* Email Field */}
           <div>
             <label
               htmlFor="email"
@@ -75,12 +80,12 @@ const ForgotPasswordPage: React.FC = () => {
             )}
           </div>
 
-          {/* Continue Button */}
           <button
             type="submit"
-            className="w-full py-4 px-6 bg-btn-primary text-white font-medium rounded-lg  text-md-custom"
+            disabled={formik.isSubmitting}
+            className="w-full py-4 px-6 bg-btn-primary text-white font-medium rounded-lg  text-md-custom disabled:cursor-not-allowed disabled:opacity-70"
           >
-            Continue
+            {formik.isSubmitting ? 'Sending...' : 'Continue'}
           </button>
         </form>
       </div>

@@ -5,22 +5,18 @@ import { useNavigate, Link } from 'react-router-dom';
 import { Mail, Lock, Eye, EyeOff } from 'lucide-react';
 import { AuthLayout } from '@/components/layout/AuthLayout';
 import { ROUTES } from '@/config/routes';
+import { useAuthData } from '@/hooks/useAuthData';
+import { toast } from '@/lib/toast';
+import { authServices } from '@/services/authServices';
 
 const LoginSchema = Yup.object().shape({
-  email: Yup.string()
-    .email('Invalid email address')
-    .required('Email is required'),
-  password: Yup.string()
-    .min(8, 'Password must be at least 8 characters')
-    .matches(/[A-Z]/, 'Password must contain at least one uppercase letter')
-    .matches(/[a-z]/, 'Password must contain at least one lowercase letter')
-    .matches(/[0-9]/, 'Password must contain at least one number')
-    .matches(/[^A-Za-z0-9]/, 'Password must contain at least one special character')
-    .required('Password is required'),
+  email: Yup.string().email('Invalid email address').required('Email is required'),
+  password: Yup.string().required('Password is required'),
 });
 
 const LoginPage: React.FC = () => {
   const navigate = useNavigate();
+  const { login } = useAuthData();
   const [showPassword, setShowPassword] = useState(false);
 
   const formik = useFormik({
@@ -30,17 +26,35 @@ const LoginPage: React.FC = () => {
       keepLoggedIn: false,
     },
     validationSchema: LoginSchema,
-    onSubmit: () => {
+    onSubmit: async (values, helpers) => {
+      try {
+        const response = await authServices.login({
+          email: values.email,
+          password: values.password,
+        });
 
-      // Dummy success logic - just navigate to dashboard since no API integration is requested
-      navigate(ROUTES.dashboard);
+        if (!response.data) {
+          throw new Error('Login response missing user data');
+        }
+
+        login(
+          response.data.user,
+          response.data.tokens.access.token,
+          response.data.tokens.refresh.token
+        );
+        toast.success(response.message || 'Super admin logged in successfully');
+        navigate(ROUTES.dashboard, { replace: true });
+      } catch (error) {
+        toast.error(error instanceof Error ? error.message : 'Login failed');
+      } finally {
+        helpers.setSubmitting(false);
+      }
     },
   });
 
   return (
     <AuthLayout>
       <div className="w-full">
-        {/* Header */}
         <div className="mb-8">
           <h1 className="text-heading font-semibold  text-text-primary mb-2">
             Welcome Back, Admin
@@ -50,9 +64,7 @@ const LoginPage: React.FC = () => {
           </p>
         </div>
 
-        {/* Form */}
         <form onSubmit={formik.handleSubmit} className="space-y-6">
-          {/* Email Field */}
           <div>
             <label
               htmlFor="email"
@@ -85,7 +97,6 @@ const LoginPage: React.FC = () => {
             )}
           </div>
 
-          {/* Password Field */}
           <div>
             <label
               htmlFor="password"
@@ -129,7 +140,6 @@ const LoginPage: React.FC = () => {
             )}
           </div>
 
-          {/* Remember me & Forgot Password */}
           <div className="flex items-center justify-between">
             <label className="flex items-center space-x-2.5 cursor-pointer group">
               <input
@@ -151,12 +161,12 @@ const LoginPage: React.FC = () => {
             </Link>
           </div>
 
-          {/* Login Button */}
           <button
             type="submit"
-            className="w-full py-4 px-6 bg-btn-primary text-white font-medium rounded-lg  text-md-custom"
+            disabled={formik.isSubmitting}
+            className="w-full py-4 px-6 bg-btn-primary text-white font-medium rounded-lg  text-md-custom disabled:cursor-not-allowed disabled:opacity-70"
           >
-            Login
+            {formik.isSubmitting ? 'Logging in...' : 'Login'}
           </button>
         </form>
       </div>
@@ -165,3 +175,4 @@ const LoginPage: React.FC = () => {
 };
 
 export default LoginPage;
+
