@@ -40,7 +40,8 @@ const LoginPage: React.FC = () => {
         login(
           response.data.user,
           response.data.tokens.access.token,
-          response.data.tokens.refresh.token
+          response.data.tokens.refresh.token,
+          values.keepLoggedIn
         );
         toast.success(response.message || 'Super admin logged in successfully');
         navigate(ROUTES.dashboard, { replace: true });
@@ -80,6 +81,7 @@ const LoginPage: React.FC = () => {
                 id="email"
                 name="email"
                 type="email"
+                autoComplete="username"
                 placeholder="Enter Your Email"
                 className={`block w-full pl-11 pr-4 py-3.5 bg-white border ${formik.touched.email && formik.errors.email
                   ? 'border-red-500 focus:ring-red-200'
@@ -112,6 +114,7 @@ const LoginPage: React.FC = () => {
                 id="password"
                 name="password"
                 type={showPassword ? 'text' : 'password'}
+                autoComplete="current-password"
                 placeholder="Enter Your Password"
                 className={`block w-full pl-11 pr-12 py-3.5 bg-white border ${formik.touched.password && formik.errors.password
                   ? 'border-red-500 focus:ring-red-200'
