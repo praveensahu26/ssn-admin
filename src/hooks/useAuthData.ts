@@ -3,12 +3,14 @@ import {
   createElement,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useState,
   type ReactNode,
 } from 'react';
 import {
   ACCESS_TOKEN_STORAGE_KEY,
+  AUTH_EXPIRED_EVENT,
   clearAuthStorage,
   getAuthStorage,
   REFRESH_TOKEN_STORAGE_KEY,
@@ -65,8 +67,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setIsAuthenticated(false);
   }, []);
 
+  useEffect(() => {
+    const handleAuthExpired = () => {
+      setUser(null);
+      setIsAuthenticated(false);
+    };
+
+    window.addEventListener(AUTH_EXPIRED_EVENT, handleAuthExpired);
+    return () => window.removeEventListener(AUTH_EXPIRED_EVENT, handleAuthExpired);
+  }, []);
+
   const updateUser = useCallback((patch: Partial<AuthUser>) => {
-    setUser(prev => {
+    setUser((prev) => {
       if (!prev) return null;
       const updated = { ...prev, ...patch };
       getAuthStorage().setItem(USER_STORAGE_KEY, JSON.stringify(updated));
@@ -96,4 +108,3 @@ export function useAuthData() {
   }
   return context;
 }
-
