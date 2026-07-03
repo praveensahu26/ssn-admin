@@ -181,14 +181,27 @@ const defaultColumns: ColumnConfig<BaseAccount>[] = [
     key: 'name',
     header: 'User name',
     render: renderUserCell,
+    csvValue: row => row.name,
   },
-  { key: 'phoneNumber', header: 'Phone number' },
+  {
+    key: 'phoneNumber',
+    header: 'Phone number',
+    csvValue: row => {
+      const num = row.phoneNumber;
+      if (!num || num === '-') return '';
+      return `\t${num}`;
+    },
+  },
   { key: 'newsReportCount', header: 'News report count' },
   { key: 'activeCampaignCount', header: 'Active campaign' },
   {
     key: 'status',
     header: 'Status',
     render: row => renderStatusBadge(row.status.value),
+    csvValue: row => {
+      const val = row.status.value;
+      return val.charAt(0).toUpperCase() + val.slice(1);
+    },
   },
 ];
 
@@ -201,14 +214,27 @@ const verificationColumns: ColumnConfig<BaseAccount>[] = [
     key: 'name',
     header: 'Reporter name',
     render: renderUserCell,
+    csvValue: row => row.name,
   },
-  { key: 'phoneNumber', header: 'Phone number' },
+  {
+    key: 'phoneNumber',
+    header: 'Phone number',
+    csvValue: row => {
+      const num = row.phoneNumber;
+      if (!num || num === '-') return '';
+      return `\t${num}`;
+    },
+  },
   { key: 'gender', header: 'Gender' },
   { key: 'journalistId', header: 'Journalist ID' },
   {
     key: 'verificationRequest',
     header: 'Status',
     render: row => renderStatusBadge(row.verificationRequest ?? 'pending'),
+    csvValue: row => {
+      const val = row.verificationRequest ?? 'pending';
+      return val.charAt(0).toUpperCase() + val.slice(1);
+    },
   },
 ];
 
@@ -229,6 +255,7 @@ export const AccountsTemplate: React.FC<AccountsTemplateProps> = ({ role }) => {
     return 'overview';
   });
   const [accounts, setAccounts] = useState<BaseAccount[]>([]);
+  const [refreshKey, setRefreshKey] = useState(0);
   const [meta, setMeta] = useState<AccountListMeta | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -284,7 +311,7 @@ export const AccountsTemplate: React.FC<AccountsTemplateProps> = ({ role }) => {
     return () => {
       isMounted = false;
     };
-  }, [activeTab, labelSuffix, role]);
+  }, [activeTab, labelSuffix, role, refreshKey]);
 
   useEffect(() => {
     if (!isReporter || activeTab !== 'verification') return;
@@ -510,11 +537,23 @@ export const AccountsTemplate: React.FC<AccountsTemplateProps> = ({ role }) => {
     <span>{row.status.reason || fallback}</span>
   );
 
+  const handleBulkStatusUpdate = async (selectedIds: string[], status: string) => {
+    setError(null);
+    try {
+      await accountServices.bulkUpdateStatus(selectedIds, status);
+      setRefreshKey(prev => prev + 1);
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : 'Unable to update status for selected accounts'
+      );
+    }
+  };
+
   const defaultBulkActions: BulkActionConfig[] = [
-    { label: 'Mark as Active', onClick: () => {} },
-    { label: 'Mark as In-active', onClick: () => {} },
-    { label: 'Mark as Blocked', onClick: () => {} },
-    { label: 'Mark as Suspend', onClick: () => {} },
+    { label: 'Mark as Active', onClick: (ids) => void handleBulkStatusUpdate(ids, 'active') },
+    { label: 'Mark as In-active', onClick: (ids) => void handleBulkStatusUpdate(ids, 'inactive') },
+    { label: 'Mark as Blocked', onClick: (ids) => void handleBulkStatusUpdate(ids, 'blocked') },
+    { label: 'Mark as Suspend', onClick: (ids) => void handleBulkStatusUpdate(ids, 'suspended') },
   ];
 
   const baseActions: ActionConfig<BaseAccount>[] = [
@@ -688,7 +727,7 @@ export const AccountsTemplate: React.FC<AccountsTemplateProps> = ({ role }) => {
     if (activeTab === 'overview') {
       return (
         <div className="mt-2 flex flex-col gap-6">
-          <AccountsOverview role={role} />
+          <AccountsOverview role={role} refreshKey={refreshKey} />
           {renderAccountTable()}
         </div>
       );

@@ -8,6 +8,7 @@ import {
 
 interface AccountsOverviewProps {
   role: 'user' | 'reporter';
+  refreshKey?: number;
 }
 
 const emptyStat: AccountStat = {
@@ -34,7 +35,7 @@ const buildCard = (title: string, stat: AccountStat) => ({
   monthlyNew: `${formatMetric(stat.monthlyNew)} New this month`,
 });
 
-export const AccountsOverview: React.FC<AccountsOverviewProps> = ({ role }) => {
+export const AccountsOverview: React.FC<AccountsOverviewProps> = ({ role, refreshKey }) => {
   const isReporter = role === 'reporter';
   const labelSuffix = isReporter ? 'Reporters' : 'Users';
   const [stats, setStats] = useState<AccountStats>({
@@ -78,7 +79,7 @@ export const AccountsOverview: React.FC<AccountsOverviewProps> = ({ role }) => {
     return () => {
       isMounted = false;
     };
-  }, [labelSuffix, role]);
+  }, [labelSuffix, role, refreshKey]);
 
   const cardsData = useMemo(
     () => [

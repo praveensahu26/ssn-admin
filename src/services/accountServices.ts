@@ -91,4 +91,9 @@ export const accountServices = {
     unwrap<{ account: AdminAccount }>(
       apiClient.post(`/admin/accounts/${id}/restore`, {})
     ),
+
+  bulkUpdateStatus: (ids: string[], status: string) =>
+    unwrap(
+      apiClient.post('/admin/accounts/bulk-status', { ids, status })
+    ),
 };
