@@ -9,9 +9,12 @@ export interface ColumnConfig<T> {
   render?: (row: T) => React.ReactNode;
 }
 
+type ActionIconProps = { className?: string };
+
 export interface ActionConfig<T> {
-  icon: React.ComponentType<any>;
+  icon: React.ComponentType<ActionIconProps>;
   onClick: (row: T) => void;
+  disabled?: (row: T) => boolean;
   className?: string;
   tooltip?: string;
   detailTitle?: (row: T) => string;
@@ -133,6 +136,7 @@ export function DataTable<T extends { id: string; name?: string; profilePicture?
       {actions.map((act, aIdx) => {
         const IconComp = act.icon;
         const hasDetail = Boolean(act.detailContent);
+        const isDisabled = act.disabled?.(row) ?? false;
         const hasMenu = Boolean(act.menuItems?.length);
         const popoverAlignment = align === 'start' ? 'left-0' : 'right-0';
         const isDetailOpen =
@@ -156,6 +160,8 @@ export function DataTable<T extends { id: string; name?: string; profilePicture?
           >
             <button
               onClick={() => {
+                if (isDisabled) return;
+
                 act.onClick(row);
                 if (hasMenu) {
                   setActiveDetail((current) =>
@@ -167,6 +173,7 @@ export function DataTable<T extends { id: string; name?: string; profilePicture?
                   setActiveDetail(null);
                 }
               }}
+              disabled={isDisabled}
               onFocus={() => {
                 if (hasDetail && !hasMenu) {
                   setActiveDetail({ rowId: row.id, actionIndex: aIdx });
@@ -177,9 +184,7 @@ export function DataTable<T extends { id: string; name?: string; profilePicture?
                   setActiveDetail(null);
                 }
               }}
-              className={`inline-flex h-9 w-9 items-center justify-center  bg-white text-text-secondary ${
-                act.className || ''
-              }`}
+              className={`inline-flex h-9 w-9 items-center justify-center bg-white text-text-secondary ${isDisabled ? 'cursor-not-allowed opacity-35' : 'cursor-pointer'} ${act.className || ''}`}
               title={act.tooltip}
               aria-expanded={hasDetail || hasMenu ? isDetailOpen : undefined}
             >

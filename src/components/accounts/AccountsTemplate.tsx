@@ -22,6 +22,10 @@ import {
   type AccountListTab,
   type AdminAccount,
 } from '@/services/accountServices';
+import {
+  adminReporterServices,
+  type AdminReporterUser,
+} from '@/services/adminReporterServices';
 import { getProfilePath } from '@/utils/profileRoutes';
 
 const EyeIcon = () => <img src="/icons/table/eye.svg" alt="view" />;
@@ -42,6 +46,29 @@ interface AccountsTemplateProps {
 }
 
 type BaseAccount = AdminAccount;
+
+function mapReporterRequest(reporter: AdminReporterUser): BaseAccount {
+  return {
+    id: reporter.id,
+    name: reporter.name,
+    username: reporter.username ?? '',
+    email: reporter.email,
+    phoneNumber: reporter.phoneNumber ?? reporter.mobile ?? '-',
+    profilePicture: reporter.avatar ?? undefined,
+    role: 'reporter_pending',
+    status: { value: 'active', reason: null },
+    newsReportCount: 0,
+    activeCampaignCount: 0,
+    isReported: false,
+    gender: reporter.gender ?? null,
+    journalistId: reporter.reporterProfile?.journalistId ?? '-',
+    verificationRequest: reporter.reporterProfile?.approvalStatus === 'approved'
+      ? 'verified'
+      : reporter.reporterProfile?.approvalStatus ?? 'pending',
+    createdAt: reporter.createdAt ?? '',
+    updatedAt: reporter.updatedAt ?? '',
+  };
+}
 
 const accountTabs: AccountTab[] = [
   'overview',
@@ -205,12 +232,17 @@ export const AccountsTemplate: React.FC<AccountsTemplateProps> = ({ role }) => {
   const [meta, setMeta] = useState<AccountListMeta | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [verificationRequests, setVerificationRequests] = useState<BaseAccount[]>([]);
+  const [verificationLoading, setVerificationLoading] = useState(false);
+  const [verificationError, setVerificationError] = useState<string | null>(null);
 
   const isReporter = role === 'reporter';
   const cols = isReporter ? reporterDefaultColumns : defaultColumns;
   const labelSuffix = isReporter ? 'reporters' : 'users';
 
   useEffect(() => {
+    if (activeTab === 'verification') return;
+
     let isMounted = true;
     const requestTab: AccountListTab =
       activeTab === 'overview' ? 'all' : activeTab;
@@ -254,7 +286,48 @@ export const AccountsTemplate: React.FC<AccountsTemplateProps> = ({ role }) => {
     };
   }, [activeTab, labelSuffix, role]);
 
-  const tableData = useMemo(() => accounts, [accounts]);
+  useEffect(() => {
+    if (!isReporter || activeTab !== 'verification') return;
+
+    let isMounted = true;
+
+    async function fetchVerificationRequests() {
+      setVerificationLoading(true);
+      setVerificationError(null);
+
+      try {
+        const reporters = await adminReporterServices.listAllVerificationReporters();
+
+        if (isMounted) {
+          setVerificationRequests(reporters.map(mapReporterRequest));
+        }
+      } catch (err) {
+        if (isMounted) {
+          setVerificationRequests([]);
+          setVerificationError(
+            err instanceof Error
+              ? err.message
+              : 'Unable to fetch verification requests'
+          );
+        }
+      } finally {
+        if (isMounted) {
+          setVerificationLoading(false);
+        }
+      }
+    }
+
+    fetchVerificationRequests();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [activeTab, isReporter]);
+
+  const tableData = useMemo(
+    () => (activeTab === 'verification' ? verificationRequests : accounts),
+    [accounts, activeTab, verificationRequests]
+  );
 
   const handleDelete = async (row: BaseAccount) => {
     setError(null);
@@ -345,13 +418,89 @@ export const AccountsTemplate: React.FC<AccountsTemplateProps> = ({ role }) => {
     }
   };
 
-  const handleVerify = (row: BaseAccount) => {
-    setAccounts(prev =>
-      prev.map(item =>
-        item.id === row.id ? { ...item, verificationRequest: 'approved' } : item
-      )
-    );
+  const handleVerify = async (row: BaseAccount) => {
+    setVerificationError(null);
+
+    try {
+      const response = await adminReporterServices.approveReporter(row.id);
+      const updatedReporter = response.data?.user;
+
+      setVerificationRequests(prev =>
+        prev.map(item =>
+          item.id === row.id
+            ? updatedReporter
+              ? mapReporterRequest(updatedReporter)
+              : { ...item, role: 'reporter', verificationRequest: 'verified' }
+            : item
+        )
+      );
+    } catch (err) {
+      setVerificationError(
+        err instanceof Error ? err.message : 'Unable to approve reporter'
+      );
+    }
   };
+
+  const handleRejectVerification = async (row: BaseAccount) => {
+    setVerificationError(null);
+
+    try {
+      const response = await adminReporterServices.rejectReporter(row.id, 'Rejected by admin');
+      const updatedReporter = response.data?.user;
+
+      setVerificationRequests(prev =>
+        prev.map(item =>
+          item.id === row.id
+            ? updatedReporter
+              ? mapReporterRequest(updatedReporter)
+              : { ...item, role: 'reporter_pending', verificationRequest: 'rejected' }
+            : item
+        )
+      );
+    } catch (err) {
+      setVerificationError(
+        err instanceof Error ? err.message : 'Unable to reject reporter'
+      );
+    }
+  };
+  const handleApproveSelected = (selectedIds: string[]) => {
+    selectedIds.forEach(id => {
+      const request = verificationRequests.find(item => item.id === id);
+      if (request && !isApproveDisabled(request)) void handleVerify(request);
+    });
+  };
+
+  const handleRejectSelected = (selectedIds: string[]) => {
+    selectedIds.forEach(id => {
+      const request = verificationRequests.find(item => item.id === id);
+      if (!request || isRejectDisabled(request)) return;
+
+      void adminReporterServices
+        .rejectReporter(id, 'Rejected by admin')
+        .then(response => {
+          const updatedReporter = response.data?.user;
+
+          setVerificationRequests(prev =>
+            prev.map(item =>
+              item.id === id
+                ? updatedReporter
+                  ? mapReporterRequest(updatedReporter)
+                  : { ...item, role: 'reporter_pending', verificationRequest: 'rejected' }
+                : item
+            )
+          );
+        })
+        .catch(err => {
+          setVerificationError(
+            err instanceof Error ? err.message : 'Unable to reject reporter'
+          );
+        });
+    });
+  };
+
+  const isApproveDisabled = (row: BaseAccount) => row.verificationRequest === 'verified';
+
+  const isRejectDisabled = (row: BaseAccount) => row.verificationRequest === 'rejected';
 
   const renderReportCount = (row: BaseAccount) => (
     <span>{row.reportCount ?? 0} reports</span>
@@ -438,10 +587,17 @@ export const AccountsTemplate: React.FC<AccountsTemplateProps> = ({ role }) => {
     {
       icon: CheckIcon,
       onClick: handleVerify,
+      disabled: isApproveDisabled,
       tooltip: 'Approve Verification',
       className: 'text-[#067647]',
     },
-    { icon: DeleteIcon, onClick: handleDelete, tooltip: 'Delete' },
+    {
+      icon: DeleteIcon,
+      onClick: handleRejectVerification,
+      disabled: isRejectDisabled,
+      tooltip: 'Reject Verification',
+      className: 'text-[#D80027]',
+    },
   ];
 
   const getTableTitle = () => {
@@ -473,43 +629,58 @@ export const AccountsTemplate: React.FC<AccountsTemplateProps> = ({ role }) => {
     return cols;
   };
 
+  const renderError = (message: string) => (
+    <div className="font-poppins text-sm-custom rounded-xl border border-red-200 bg-red-50 px-4 py-3 font-medium text-red-700">
+      {message}
+    </div>
+  );
+
   const renderAccountTable = () => {
-    if (error) {
-      return (
-        <div className="font-poppins text-sm-custom rounded-xl border border-red-200 bg-red-50 px-4 py-3 font-medium text-red-700">
-          {error}
-        </div>
-      );
+    if (activeTab !== 'verification' && error) {
+      return renderError(error);
     }
 
     return (
-      <DataTable
-        title={getTableTitle()}
-        label={
-          activeTab === 'overview'
-            ? `${tableData.length} recent ${labelSuffix}`
-            : meta
-              ? `${meta.total} ${labelSuffix}`
-              : undefined
-        }
-        data={isLoading ? [] : tableData}
-        columns={getTableColumns()}
-        actions={getTableActions()}
-        bulkActions={
-          activeTab === 'verification'
-            ? [
-                { label: 'Approve All', onClick: () => {} },
-                { label: 'Reject All', onClick: () => {} },
-              ]
-            : defaultBulkActions
-        }
-        searchKeys={
-          activeTab === 'verification'
-            ? ['name', 'email', 'phoneNumber', 'journalistId']
-            : ['name', 'email', 'phoneNumber']
-        }
-        itemsPerPage={12}
-      />
+      <div className="flex flex-col gap-3">
+        {activeTab === 'verification' && verificationError &&
+          renderError(verificationError)}
+        {activeTab === 'verification' && verificationLoading && (
+          <div className="text-md-custom text-text-secondary rounded-lg border border-[#DCE5EF] bg-white px-4 py-3 font-medium">
+            Fetching verification requests...
+          </div>
+        )}
+        <DataTable
+          title={getTableTitle()}
+          label={
+            activeTab === 'overview'
+              ? `${tableData.length} recent ${labelSuffix}`
+              : activeTab === 'verification'
+                ? `${tableData.length} verification requests`
+                : meta
+                  ? `${meta.total} ${labelSuffix}`
+                  : undefined
+          }
+          data={activeTab === 'verification'
+            ? verificationLoading ? [] : tableData
+            : isLoading ? [] : tableData}
+          columns={getTableColumns()}
+          actions={getTableActions()}
+          bulkActions={
+            activeTab === 'verification'
+              ? [
+                  { label: 'Approve All', onClick: handleApproveSelected },
+                  { label: 'Reject All', onClick: handleRejectSelected },
+                ]
+              : defaultBulkActions
+          }
+          searchKeys={
+            activeTab === 'verification'
+              ? ['name', 'email', 'phoneNumber', 'journalistId']
+              : ['name', 'email', 'phoneNumber']
+          }
+          itemsPerPage={12}
+        />
+      </div>
     );
   };
 
