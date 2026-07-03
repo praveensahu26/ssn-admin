@@ -42,6 +42,10 @@ interface ProfileDetailsLayoutProps {
   profile: ProfileDetailsAccount;
   detailsBasePath?: string;
   onBack: () => void;
+  onModerationSubmit?: (
+    actionType: 'warning' | 'block' | 'suspend',
+    payload: { reasons: string[]; description: string; notifyUser: boolean; duration?: string }
+  ) => void;
 }
 
 function formatCount(value = 0) {
@@ -115,7 +119,7 @@ function getProfileStatusBanner(profile: ProfileDetailsAccount) {
   return null;
 }
  
-export function ProfileDetailsLayout({ profile, detailsBasePath, onBack }: ProfileDetailsLayoutProps) {
+export function ProfileDetailsLayout({ profile, detailsBasePath, onBack, onModerationSubmit }: ProfileDetailsLayoutProps) {
   const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
   const activeContent = searchParams.get('tab') === 'campaigns' ? 'campaigns' : 'posts';
@@ -394,6 +398,9 @@ export function ProfileDetailsLayout({ profile, detailsBasePath, onBack }: Profi
           config={moderationActionConfigs[moderationAction]}
           profileRole={profileRole}
           onClose={() => setModerationAction(null)}
+          onSubmit={(payload) => {
+            onModerationSubmit?.(moderationAction as any, payload);
+          }}
         />
       )}
     </section>

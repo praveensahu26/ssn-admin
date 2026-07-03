@@ -56,6 +56,12 @@ export interface AdminAccount {
   verificationRequest?: string | null;
   createdAt: string;
   updatedAt: string;
+  followersCount?: number;
+  followingCount?: number;
+  followers?: any[];
+  following?: any[];
+  postsCount?: number;
+  campaignsCount?: number;
 }
 
 export interface AccountListMeta {
@@ -84,6 +90,21 @@ export const accountServices = {
       apiClient.get('/admin/accounts', { params })
     ),
 
+  getAccount: (id: string) =>
+    unwrap<{ account: AdminAccount }>(
+      apiClient.get(`/admin/accounts/${id}`)
+    ),
+
+  getAccountPosts: (id: string, params: { page?: number; limit?: number } = {}) =>
+    unwrap<{ posts: any[]; meta: AccountListMeta }>(
+      apiClient.get(`/admin/accounts/${id}/posts`, { params })
+    ),
+
+  getAccountCampaigns: (id: string, params: { page?: number; limit?: number } = {}) =>
+    unwrap<{ campaigns: any[]; meta: AccountListMeta }>(
+      apiClient.get(`/admin/accounts/${id}/campaigns`, { params })
+    ),
+
   deleteAccount: (id: string) =>
     unwrap(apiClient.delete(`/admin/accounts/${id}`)),
 
@@ -95,5 +116,45 @@ export const accountServices = {
   bulkUpdateStatus: (ids: string[], status: string) =>
     unwrap(
       apiClient.post('/admin/accounts/bulk-status', { ids, status })
+    ),
+
+  warnAccount: (id: string, payload: { reasons: string[]; description: string; notifyUser: boolean }) =>
+    unwrap<{ account: AdminAccount }>(
+      apiClient.post(`/admin/accounts/${id}/warn`, payload)
+    ),
+
+  blockAccount: (id: string, payload: { reasons: string[]; description: string; notifyUser: boolean }) =>
+    unwrap<{ account: AdminAccount }>(
+      apiClient.post(`/admin/accounts/${id}/block`, payload)
+    ),
+
+  suspendAccount: (id: string, payload: { reasons: string[]; description: string; notifyUser: boolean; duration?: string }) =>
+    unwrap<{ account: AdminAccount }>(
+      apiClient.post(`/admin/accounts/${id}/suspend`, payload)
+    ),
+
+  getPostDetails: (postId: string) =>
+    unwrap<{ news: any }>(
+      apiClient.get(`/news/${postId}`)
+    ),
+
+  getPostComments: (postId: string, params: { page?: number; limit?: number } = {}) =>
+    unwrap<{ results: any[]; meta: AccountListMeta }>(
+      apiClient.get(`/news/${postId}/comments`, { params })
+    ),
+
+  getPostLikes: (postId: string, params: { page?: number; limit?: number } = {}) =>
+    unwrap<{ results: any[]; meta: AccountListMeta }>(
+      apiClient.get(`/news/${postId}/reactions`, { params: { ...params, type: 'like' } })
+    ),
+
+  getCampaignDetails: (campaignId: string) =>
+    unwrap<{ campaign: any }>(
+      apiClient.get(`/admin/campaigns/${campaignId}`)
+    ),
+
+  getCampaignSupport: (campaignId: string, params: { page?: number; limit?: number } = {}) =>
+    unwrap<{ results: any[]; meta: AccountListMeta }>(
+      apiClient.get(`/campaigns/${campaignId}/support`, { params })
     ),
 };
