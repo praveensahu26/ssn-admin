@@ -1,12 +1,14 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import SearchBar from '@/components/ui/SearchBar';
 import DownloadButton from '@/components/ui/DownloadButton';
+import { exportToCsv } from '@/utils/exportCsv';
 import Pagination from '@/components/ui/Pagination';
 
 export interface ColumnConfig<T> {
   key: string;
   header: string;
   render?: (row: T) => React.ReactNode;
+  csvValue?: (row: T) => string | number | boolean | null | undefined;
 }
 
 type ActionIconProps = { className?: string };
@@ -60,6 +62,10 @@ export function DataTable<T extends { id: string; name?: string; profilePicture?
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [activeDetail, setActiveDetail] = useState<{ rowId: string; actionIndex: number } | null>(null);
+
+  useEffect(() => {
+    setSelectedIds([]);
+  }, [data]);
 
   useEffect(() => {
     if (!activeDetail) return;
@@ -126,6 +132,19 @@ export function DataTable<T extends { id: string; name?: string; profilePicture?
     } else {
       setSelectedIds([...selectedIds, id]);
     }
+  };
+
+  const handleDownloadCsv = () => {
+    const slugify = (str: string) =>
+      str
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/(^-|-$)/g, '');
+
+    const dateStr = new Date().toISOString().split('T')[0];
+    const filename = `${slugify(title)}-${dateStr}.csv`;
+
+    exportToCsv(paginatedData, columns, filename);
   };
 
   const renderCell = (row: T, col: ColumnConfig<T>) =>
@@ -249,7 +268,10 @@ export function DataTable<T extends { id: string; name?: string; profilePicture?
             placeholder={searchPlaceholder}
             className="sm:max-w-[320px]"
           />
-          <DownloadButton />
+          <DownloadButton
+            onDownload={handleDownloadCsv}
+            disabled={paginatedData.length === 0}
+          />
         </div>
       </div>
 
