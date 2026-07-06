@@ -30,7 +30,7 @@ function mapApiCampaignToCard(campaign: AdminCampaign) {
   // The server uses 'pending' internally; map it to 'requested' for the UI.
   const status = campaign.status === 'pending' ? 'requested' : campaign.status;
   return {
-    id: campaign._id,
+    id: campaign.id || campaign._id,
     mediaUrl: campaign.attachments?.[0]?.url ?? '',
     mediaType: campaign.attachments?.[0]?.type ?? 'image',
     viewCount: String(campaign.viewsCount ?? 0),

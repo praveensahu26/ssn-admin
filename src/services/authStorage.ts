@@ -23,6 +23,20 @@ export function getAccessToken() {
   return localStorage.getItem(ACCESS_TOKEN_STORAGE_KEY) || sessionStorage.getItem(ACCESS_TOKEN_STORAGE_KEY);
 }
 
+export function getRefreshToken() {
+  return localStorage.getItem(REFRESH_TOKEN_STORAGE_KEY) || sessionStorage.getItem(REFRESH_TOKEN_STORAGE_KEY);
+}
+
+export function setAccessToken(token: string) {
+  const storage = getAuthStorage();
+  storage.setItem(ACCESS_TOKEN_STORAGE_KEY, token);
+}
+
+export function setRefreshToken(token: string) {
+  const storage = getAuthStorage();
+  storage.setItem(REFRESH_TOKEN_STORAGE_KEY, token);
+}
+
 export function notifyAuthExpired() {
   window.dispatchEvent(new Event(AUTH_EXPIRED_EVENT));
 }

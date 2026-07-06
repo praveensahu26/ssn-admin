@@ -46,6 +46,11 @@ export const authServices = {
     password: string;
     confirmPassword: string;
   }) => unwrap(apiClient.post('/admin/auth/reset-password', payload)),
+
+  refreshToken: (refreshToken: string) =>
+    unwrap<{ access: { token: string; expires: string }; refresh: { token: string; expires: string } }>(
+      apiClient.post('/admin/auth/refresh-tokens', { refreshToken })
+    ),
 };
 
 export type { ApiResponse };
