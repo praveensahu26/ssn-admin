@@ -19,7 +19,7 @@ function mapCampaign(raw: AdminCampaign) {
   const status = raw.status === 'pending' ? 'requested' : raw.status;
 
   return {
-    id: raw._id,
+    id: raw.id || raw._id,
     mediaUrl: raw.attachments?.[0]?.url ?? '',
     mediaType: raw.attachments?.[0]?.type ?? 'image',
     viewCount: String(raw.viewsCount ?? 0),
@@ -42,7 +42,7 @@ function mapCampaign(raw: AdminCampaign) {
 // ─── Component ───────────────────────────────────────────────────────────────
 
 export function CampaignDetailsPage() {
-  const { campaignId } = useParams<{ campaignId: string }>();
+  const { id } = useParams<{ id: string }>();
 
   const [campaign, setCampaign] = useState<ReturnType<typeof mapCampaign> | null>(null);
   const [author, setAuthor] = useState<{ name: string; profilePicture?: string } | null>(null);
@@ -59,14 +59,14 @@ export function CampaignDetailsPage() {
   // ── Initial data load ──────────────────────────────────────────────────────
   useEffect(() => {
     async function loadData() {
-      if (!campaignId) return;
+      if (!id) return;
       try {
         setIsLoading(true);
         setError(null);
 
         const [campaignRes, supportRes] = await Promise.all([
-          adminCampaignServices.getCampaign(campaignId),
-          accountServices.getCampaignSupport(campaignId, { limit: 100 }),
+          adminCampaignServices.getCampaign(id),
+          accountServices.getCampaignSupport(id, { limit: 100 }),
         ]);
 
         const rawCampaign = campaignRes.data?.campaign;
@@ -94,15 +94,15 @@ export function CampaignDetailsPage() {
       }
     }
     loadData();
-  }, [campaignId]);
+  }, [id]);
 
   // ── Action handlers ────────────────────────────────────────────────────────
 
   const handleApprove = useCallback(async () => {
-    if (!campaignId) return;
+    if (!id) return;
     setIsApproving(true);
     try {
-      const res = await adminCampaignServices.approveCampaign(campaignId);
+      const res = await adminCampaignServices.approveCampaign(id);
       const updated = res.data?.campaign;
       if (updated) setCampaign(mapCampaign(updated));
     } catch (err) {
@@ -110,13 +110,13 @@ export function CampaignDetailsPage() {
     } finally {
       setIsApproving(false);
     }
-  }, [campaignId]);
+  }, [id]);
 
   const handleReject = useCallback(async (rejectionReason: string) => {
-    if (!campaignId) return;
+    if (!id) return;
     setIsRejecting(true);
     try {
-      const res = await adminCampaignServices.rejectCampaign(campaignId, rejectionReason);
+      const res = await adminCampaignServices.rejectCampaign(id, rejectionReason);
       const updated = res.data?.campaign;
       if (updated) setCampaign(mapCampaign(updated));
     } catch (err) {
@@ -124,14 +124,14 @@ export function CampaignDetailsPage() {
     } finally {
       setIsRejecting(false);
     }
-  }, [campaignId]);
+  }, [id]);
 
   const handleSuspend = useCallback(
     async (payload: { suspensionReasons: SuspensionReason[]; suspensionNote?: string }) => {
-      if (!campaignId) return;
+      if (!id) return;
       setIsSuspending(true);
       try {
-        const res = await adminCampaignServices.suspendCampaign(campaignId, payload);
+        const res = await adminCampaignServices.suspendCampaign(id, payload);
         const updated = res.data?.campaign;
         if (updated) setCampaign(mapCampaign(updated));
       } catch (err) {
@@ -140,14 +140,14 @@ export function CampaignDetailsPage() {
         setIsSuspending(false);
       }
     },
-    [campaignId]
+    [id]
   );
 
   const handleComplete = useCallback(async () => {
-    if (!campaignId) return;
+    if (!id) return;
     setIsCompleting(true);
     try {
-      const res = await adminCampaignServices.completeCampaign(campaignId);
+      const res = await adminCampaignServices.completeCampaign(id);
       const updated = res.data?.campaign;
       if (updated) setCampaign(mapCampaign(updated));
     } catch (err) {
@@ -155,7 +155,7 @@ export function CampaignDetailsPage() {
     } finally {
       setIsCompleting(false);
     }
-  }, [campaignId]);
+  }, [id]);
 
   // ── Render ─────────────────────────────────────────────────────────────────
 

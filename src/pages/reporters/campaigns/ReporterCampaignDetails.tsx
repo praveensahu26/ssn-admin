@@ -8,7 +8,7 @@ import MainLayout from '@/components/layout/MainLayout';
 import { accountServices } from '@/services/accountServices';
 
 export function ReporterCampaignDetails() {
-  const { campaignId } = useParams<{ username: string; campaignId: string }>();
+  const { id } = useParams<{ username: string; id: string }>();
 
   const [campaign, setCampaign] = useState<any | null>(null);
   const [author, setAuthor] = useState<any | null>(null);
@@ -18,14 +18,14 @@ export function ReporterCampaignDetails() {
 
   useEffect(() => {
     async function loadData() {
-      if (!campaignId) return;
+      if (!id) return;
       try {
         setIsLoading(true);
         setError(null);
 
         const [campaignRes, supportRes] = await Promise.all([
-          accountServices.getCampaignDetails(campaignId),
-          accountServices.getCampaignSupport(campaignId, { limit: 100 }),
+          accountServices.getCampaignDetails(id),
+          accountServices.getCampaignSupport(id, { limit: 100 }),
         ]);
 
         const rawCampaign = campaignRes.data?.campaign;
@@ -73,7 +73,7 @@ export function ReporterCampaignDetails() {
       }
     }
     loadData();
-  }, [campaignId]);
+  }, [id]);
 
   if (isLoading) {
     return (

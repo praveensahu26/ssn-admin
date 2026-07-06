@@ -1,6 +1,7 @@
 import axios, { AxiosError } from 'axios';
 import { env } from '@/config/env';
-import { clearAuthStorage, getAccessToken, notifyAuthExpired } from './authStorage';
+import { clearAuthStorage, getAccessToken, getRefreshToken, setAccessToken, setRefreshToken, notifyAuthExpired } from './authStorage';
+import { authServices } from './authServices';
 
 export interface ApiResponse<T = unknown> {
   success: boolean;
@@ -32,14 +33,43 @@ apiClient.interceptors.request.use((config) => {
 
 apiClient.interceptors.response.use(
   (response) => response,
-  (error: AxiosError<ApiResponse>) => {
+  async (error: AxiosError<ApiResponse>) => {
     const statusCode = error.response?.status;
     const message = error.response?.data?.message?.toLowerCase() ?? '';
     const hadToken = Boolean(getAccessToken());
 
     if (statusCode === 401 && hadToken && message.includes('jwt expired')) {
-      clearAuthStorage();
-      notifyAuthExpired();
+      const refreshToken = getRefreshToken();
+      
+      if (refreshToken) {
+        try {
+          const response = await authServices.refreshToken(refreshToken);
+          if (response.data) {
+            setAccessToken(response.data.access.token);
+            setRefreshToken(response.data.refresh.token);
+            
+            // Retry the original request with new token
+            const originalRequest = error.config;
+            if (originalRequest) {
+              originalRequest.headers.Authorization = `Bearer ${response.data.access.token}`;
+              return apiClient(originalRequest);
+            }
+          } else {
+            // Invalid response, clear auth and notify
+            clearAuthStorage();
+            notifyAuthExpired();
+          }
+        } catch (refreshError) {
+          // Refresh failed, clear auth and notify
+          clearAuthStorage();
+          notifyAuthExpired();
+          return Promise.reject(error);
+        }
+      } else {
+        // No refresh token available, clear auth and notify
+        clearAuthStorage();
+        notifyAuthExpired();
+      }
     }
 
     return Promise.reject(error);

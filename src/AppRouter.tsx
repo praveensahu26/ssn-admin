@@ -47,15 +47,15 @@ const AppRouter = () => {
             <Route path={ROUTES.users} element={<UsersPage />} />
             <Route path={`${ROUTES.users}/:username`} element={<UserProfileDetailsPage />} />
             <Route path={`${ROUTES.users}/:username/posts/:postId`} element={<UserPostDetailsPage />} />
-            <Route path={`${ROUTES.users}/:username/campaigns/:campaignId`} element={<UserCampaignDetailsPage />} />
+            <Route path={`${ROUTES.users}/:username/campaigns/:id`} element={<UserCampaignDetailsPage />} />
             <Route path={ROUTES.reporters} element={<ReportersPage />} />
             <Route path={`${ROUTES.reporters}/:username`} element={<ReporterProfileDetailsPage />} />
             <Route path={`${ROUTES.reporters}/:username/posts/:postId`} element={<ReporterPostDetailsPage />} />
-            <Route path={`${ROUTES.reporters}/:username/campaigns/:campaignId`} element={<ReporterCampaignDetailsPage />} />
+            <Route path={`${ROUTES.reporters}/:username/campaigns/:id`} element={<ReporterCampaignDetailsPage />} />
             <Route path={ROUTES.newsFeed} element={<NewsFeedPage />} />
             <Route path={`${ROUTES.newsFeed}/:postId`} element={<NewsFeedPostDetailsPage />} />
             <Route path={ROUTES.campaigns} element={<CampaignsPage />} />
-            <Route path={`${ROUTES.campaigns}/:campaignId`} element={<CampaignDetailsPage />} />
+            <Route path={`${ROUTES.campaigns}/:id`} element={<CampaignDetailsPage />} />
             <Route path={ROUTES.settings} element={<SettingsPage />} />
           </Route>
 
