@@ -8,6 +8,7 @@ export const ROUTES = {
   users: '/users',
   reporters: '/reporters',
   newsFeed: '/news-feed',
+  adminNews: '/admin-news',
   campaigns: '/campaigns',
   settings: '/settings',
   notFound: '*',

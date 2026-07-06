@@ -26,9 +26,10 @@ interface PostInfoProps {
   };
   onShowLikes: () => void;
   onShowComments: () => void;
+  onDelete?: () => void;
 }
 
-export function PostInfo({ post, author, onShowLikes, onShowComments }: PostInfoProps) {
+export function PostInfo({ post, author, onShowLikes, onShowComments, onDelete }: PostInfoProps) {
   return (
     <div>
       <MediaPreview
@@ -45,7 +46,15 @@ export function PostInfo({ post, author, onShowLikes, onShowComments }: PostInfo
           <div className="bg-[#8E8E93] w-1 h-1  rounded-full"></div>
           <span>{post.postTime} </span>
         </div>
-        <MoreActionButton label="Delete Post" />
+        <MoreActionButton
+          items={[
+            {
+              label: 'Delete Post',
+              icon: '/icons/table/delete.svg',
+              onClick: onDelete,
+            },
+          ]}
+        />
       </div>
 
       <h1 className="mt-1 text-md-custom font-medium leading-6 text-text-primary">{post.title}</h1>

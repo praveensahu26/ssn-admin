@@ -1,39 +1,46 @@
 import { X } from 'lucide-react';
 import { useEffect, useState } from 'react';
-
-const suspensionReasons = [
-  'Violation of Platform Policies',
-  'Misleading or False Information',
-  'Inappropriate Content',
-  'Reported for Fraudulent Activity',
-  'Other',
-];
+import { suspensionReasonValues, type SuspensionReason } from '@/services/adminCampaignServices';
 
 interface SuspendCampaignDrawerProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit?: (reasons: string[]) => void;
+  /** Called when the admin confirms suspension. Receives the chosen reasons and an optional note. */
+  onSubmit?: (payload: { suspensionReasons: SuspensionReason[]; suspensionNote?: string }) => void;
+  /** Whether a submission is in-flight (shows a loading indicator). */
+  isSubmitting?: boolean;
 }
 
 export function SuspendCampaignDrawer({
   isOpen,
   onClose,
   onSubmit,
+  isSubmitting = false,
 }: SuspendCampaignDrawerProps) {
-  const [selectedReason, setSelectedReason] = useState('');
+  const [selectedReasons, setSelectedReasons] = useState<SuspensionReason[]>([]);
+  const [note, setNote] = useState('');
+
+  const requiresNote = selectedReasons.includes('Other');
+  const canSubmit = selectedReasons.length > 0 && (!requiresNote || note.trim().length > 0);
 
   function resetAndClose() {
-    setSelectedReason('');
+    setSelectedReasons([]);
+    setNote('');
     onClose();
   }
 
-  function selectReason(reason: string) {
-    setSelectedReason((currentReason) => (currentReason === reason ? '' : reason));
+  function toggleReason(reason: SuspensionReason) {
+    setSelectedReasons((prev) =>
+      prev.includes(reason) ? prev.filter((r) => r !== reason) : [...prev, reason]
+    );
   }
 
   function handleSubmit() {
-    onSubmit?.(selectedReason ? [selectedReason] : []);
-    resetAndClose();
+    if (!canSubmit) return;
+    onSubmit?.({
+      suspensionReasons: selectedReasons,
+      suspensionNote: requiresNote ? note.trim() : undefined,
+    });
   }
 
   useEffect(() => {
@@ -52,7 +59,7 @@ export function SuspendCampaignDrawer({
       document.body.style.overflow = '';
       document.removeEventListener('keydown', handleKeyDown);
     };
-  });
+  }); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div
@@ -95,7 +102,7 @@ export function SuspendCampaignDrawer({
               className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-[#DCE5EF] text-md-custom font-medium text-text-primary"
               onClick={resetAndClose}
             >
-             <X className="h-4 w-4" />
+              <X className="h-4 w-4" />
             </button>
           </div>
         </header>
@@ -106,34 +113,51 @@ export function SuspendCampaignDrawer({
           </h3>
 
           <div className="mt-4 flex flex-col gap-3">
-            {suspensionReasons.map((reason) => (
+            {suspensionReasonValues.map((reason) => (
               <label
                 key={reason}
                 className="flex items-center gap-2 text-sm-custom font-medium leading-4 text-text-secondary"
               >
                 <input
                   type="checkbox"
-                  checked={selectedReason === reason}
+                  checked={selectedReasons.includes(reason)}
                   className="h-4 w-4 rounded border-[#AFC0D2] accent-btn-primary"
-                  onChange={() => selectReason(reason)}
+                  onChange={() => toggleReason(reason)}
                 />
                 <span>{reason}</span>
               </label>
             ))}
           </div>
+
+          {requiresNote && (
+            <div className="mt-4">
+              <label className="mb-1 block text-sm-custom font-medium text-text-primary">
+                Additional Note <span className="text-red-500">*</span>
+              </label>
+              <textarea
+                rows={3}
+                value={note}
+                onChange={(e) => setNote(e.target.value)}
+                placeholder="Describe the reason in more detail…"
+                className="w-full rounded-lg border border-[#DCE5EF] p-3 text-sm-custom text-text-primary placeholder-text-secondary outline-none focus:border-btn-primary"
+              />
+            </div>
+          )}
         </div>
 
         <footer className="shrink-0 px-5 pb-6 pt-4">
           <button
             type="button"
-            className="flex h-12 w-full items-center justify-center rounded-lg bg-btn-primary text-sm-custom font-medium text-white"
+            disabled={!canSubmit || isSubmitting}
+            className="flex h-12 w-full items-center justify-center rounded-lg bg-btn-primary text-sm-custom font-medium text-white disabled:opacity-50"
             onClick={handleSubmit}
           >
-            Suspend Campaign
+            {isSubmitting ? 'Suspending…' : 'Suspend Campaign'}
           </button>
           <button
             type="button"
-            className="mt-3 flex h-12 w-full items-center justify-center rounded-lg bg-[#D6EAFF] text-sm-custom font-medium text-text-primary"
+            disabled={isSubmitting}
+            className="mt-3 flex h-12 w-full items-center justify-center rounded-lg bg-[#D6EAFF] text-sm-custom font-medium text-text-primary disabled:opacity-50"
             onClick={resetAndClose}
           >
             Cancel
