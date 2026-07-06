@@ -1,180 +1,213 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import MainLayout from '@/components/layout/MainLayout';
-import NewsFeedCard, { type NewsFeedPost } from '@/components/news-feed/NewsFeedCard';
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore - dummyData is a plain JS module with no type declarations
-import { dummyData } from '@/dummyData/dummyData';
+import NewsFeedCard from '@/components/news-feed/NewsFeedCard';
+import { adminNewsServices, type AdminNewsPost } from '@/services/adminNewsServices';
+import { apiClient } from '@/services/apiClient';
 
-interface DummyPost {
+const PAGE_SIZE = 12;
+
+interface CategoryItem {
   id: string;
-  mediaUrl: string;
-  mediaType?: string;
-  viewCount: string;
-  postTime: string;
-  title: string;
-  likeCount: string;
-  commentCount: string;
-  shareCount: string;
-  categories?: string[];
-}
-
-interface DummyAccount {
   name: string;
-  profilePicture?: string;
-  posts?: DummyPost[];
-}
-
-const categories = [
-  'Home',
-  'Business',
-  'World',
-  'States',
-  'Sports',
-  'Crime',
-  'Technology',
-  'Defence',
-  'Judiciary',
-  'International',
-  'Education',
-  'Health',
-];
-
-const sections = [
-  { title: 'Recent', category: 'Home' },
-  { title: 'Global News', category: 'World' },
-  { title: 'Business News', category: 'Business' },
-  { title: 'Technology News', category: 'Technology' },
-  { title: 'State News', category: 'States' },
-  { title: 'Sports News', category: 'Sports' },
-];
-
-function normalizeCategory(category: string) {
-  const lower = category.toLowerCase();
-
-  if (lower.includes('business')) return 'Business';
-  if (lower.includes('tech') || lower.includes('startup')) return 'Technology';
-  if (lower.includes('sport')) return 'Sports';
-  if (lower.includes('crime') || lower.includes('justice')) return 'Crime';
-  if (lower.includes('education')) return 'Education';
-  if (lower.includes('health')) return 'Health';
-  if (lower.includes('politics') || lower.includes('world') || lower.includes('climate')) return 'World';
-  if (lower.includes('state') || lower.includes('local')) return 'States';
-
-  return 'Home';
-}
-
-function isNewsCategory(value: string | null): value is string {
-  return Boolean(value && categories.includes(value));
-}
-
-function buildFeedPosts(accounts: DummyAccount[]): NewsFeedPost[] {
-  return accounts.flatMap((account) =>
-    (account.posts ?? []).map((post) => {
-      return {
-        id: `${account.name}-${post.id}`,
-        mediaUrl: post.mediaUrl,
-        mediaType: post.mediaType,
-        viewCount: post.viewCount,
-        postTime: post.postTime,
-        title: post.title,
-        likeCount: post.likeCount,
-        commentCount: post.commentCount,
-        shareCount: post.shareCount,
-        authorName: account.name,
-        authorImage: account.profilePicture,
-        category: normalizeCategory(post.categories?.[0] ?? 'Home'),
-        detailsPath: `/news-feed/${post.id}`,
-      };
-    })
-  );
 }
 
 export function NewsFeedPage() {
   const [searchParams, setSearchParams] = useSearchParams();
-  const [activeCategory, setActiveCategory] = useState(() => {
-    const category = searchParams.get('category');
-
-    return isNewsCategory(category) ? category : 'Home';
+  const [activeCategory, setActiveCategory] = useState<string>(() => {
+    return searchParams.get('category') || 'Home';
   });
-  const posts = useMemo(() => buildFeedPosts(dummyData as DummyAccount[]), []);
+
+  const [categoriesList, setCategoriesList] = useState<CategoryItem[]>([]);
+  const [posts, setPosts] = useState<AdminNewsPost[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [error, setError] = useState<string | null>(null);
+
+  const loadMoreRef = useRef<HTMLDivElement>(null);
+
+  // 1. Fetch categories on mount
+  useEffect(() => {
+    async function fetchCategories() {
+      try {
+        const res = await apiClient.get('/categories');
+        const dbCategories = res.data?.data?.categories || [];
+        setCategoriesList([
+          { id: 'Home', name: 'Home' },
+          ...dbCategories.map((c: any) => ({ id: c._id || c.id, name: c.name })),
+        ]);
+      } catch (err) {
+        console.error('Failed to load categories', err);
+      }
+    }
+    fetchCategories();
+  }, []);
+
+  // 2. Fetch posts callback
+  const fetchPosts = useCallback(
+    async (catId: string, nextPage: number, append: boolean) => {
+      setIsLoading(true);
+      setError(null);
+
+      try {
+        const params: any = {
+          page: nextPage,
+          limit: PAGE_SIZE,
+        };
+
+        if (catId !== 'Home') {
+          params.category = catId;
+        }
+
+        const res = await adminNewsServices.listNews(params);
+
+        const incoming = res.data?.posts ?? [];
+        setPosts((prev) => (append ? [...prev, ...incoming] : incoming));
+        setTotalPages(res.meta?.totalPages ?? 1);
+        setPage(nextPage);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to load news posts');
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    []
+  );
+
+  // 3. React to category change (from URL param)
+  useEffect(() => {
+    const category = searchParams.get('category') || 'Home';
+    setActiveCategory(category);
+    setPosts([]);
+    fetchPosts(category, 1, false);
+  }, [searchParams, fetchPosts]);
+
+  // 4. Infinite scroll
+  const hasMore = page < totalPages;
 
   useEffect(() => {
-    const category = searchParams.get('category');
+    if (!hasMore || isLoading) return undefined;
 
-    setActiveCategory(isNewsCategory(category) ? category : 'Home');
-  }, [searchParams]);
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry?.isIntersecting) {
+          fetchPosts(activeCategory, page + 1, true);
+        }
+      },
+      { rootMargin: '240px 0px' }
+    );
 
-  function handleCategoryChange(category: string) {
-    setActiveCategory(category);
-    setSearchParams(category === 'Home' ? {} : { category });
+    const el = loadMoreRef.current;
+    if (el) observer.observe(el);
+
+    return () => {
+      if (el) observer.unobserve(el);
+    };
+  }, [hasMore, isLoading, activeCategory, page, fetchPosts]);
+
+  function handleCategoryChange(catId: string) {
+    setActiveCategory(catId);
+    setSearchParams(catId === 'Home' ? {} : { category: catId });
   }
 
-  const filteredPosts = useMemo(() => {
-    if (activeCategory === 'Home') return posts;
-
-    return posts.filter((post) => (post as NewsFeedPost & { category: string }).category === activeCategory);
-  }, [activeCategory, posts]);
-
-  const postsBySection = useMemo(
-    () =>
-      sections.map((section, index) => {
-        const sectionPosts =
-          section.category === 'Home'
-            ? filteredPosts.slice(index * 4, index * 4 + 4)
-            : posts
-                .filter((post) => (post as NewsFeedPost & { category: string }).category === section.category)
-                .slice(0, 4);
-
-        return {
-          ...section,
-          posts: sectionPosts.length ? sectionPosts : filteredPosts.slice(index * 4, index * 4 + 4),
-        };
-      }),
-    [filteredPosts, posts]
-  );
+  async function handleDeletePost(id: string) {
+    try {
+      await adminNewsServices.deleteNews(id);
+      setPosts((prev) => prev.filter((p) => (p.id || p._id) !== id));
+    } catch (err) {
+      console.error('Failed to delete post', err);
+    }
+  }
 
   return (
     <MainLayout>
-      <section className="mx-auto w-full max-w-[1280px] min-w-0 overflow-hidden">
+      <section className="mx-auto w-full max-w-[1280px] min-w-0 overflow-hidden flex flex-col gap-6">
+        
+        {/* Categories Tabs Scroll Row */}
         <div className="no-scrollbar flex max-w-full gap-4 overflow-x-auto pb-2">
-          {categories.map((category) => {
-            const isActive = activeCategory === category;
+          {categoriesList.map((cat) => {
+            const isActive = activeCategory === cat.id;
 
             return (
               <button
-                key={category}
+                key={cat.id}
                 type="button"
-                className={`h-12 shrink-0 rounded-lg border px-6 text-md-custom font-medium transition-colors ${
+                className={`h-12 shrink-0 rounded-lg border px-6 text-md-custom font-medium transition-colors font-poppins ${
                   isActive
                     ? 'border-btn-primary bg-btn-primary text-white'
                     : 'border-[#DCE5EF] bg-white text-text-secondary'
                 }`}
-                onClick={() => handleCategoryChange(category)}
+                onClick={() => handleCategoryChange(cat.id)}
               >
-                {category}
+                {cat.name}
               </button>
             );
           })}
         </div>
 
-        <div className="mt-4 space-y-6">
-          {postsBySection.map((section, sectionIndex) => (
-            <section key={`${section.title}-${activeCategory}`}>
-              <h1 className="mb-3 text-md-custom font-medium leading-5 text-text-secondary">
-                {activeCategory === 'Home' ? section.title : `${activeCategory} News`}
-              </h1>
-              <div className="grid min-w-0 grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-[repeat(4,minmax(0,1fr))]">
-                {section.posts.map((post, postIndex) => (
-                  <NewsFeedCard
-                    key={`${section.title}-${post.id}-${postIndex}`}
-                    post={post}
-                    showViewBadge={sectionIndex > 0 && postIndex === 0}
-                  />
-                ))}
+        {/* Posts Area */}
+        <div className="min-w-0">
+          {error && (
+            <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm font-medium text-red-700 font-poppins">
+              {error}
+            </div>
+          )}
+
+          {!error && posts.length > 0 && (
+            <>
+              <div className="grid min-w-0 grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-4">
+                {posts.map((post) => {
+                  const authorName = post.author?.name || 'Unknown';
+                  const authorImage = post.author?.avatar || undefined;
+                  const mediaUrl = post.media?.[0]?.url || '';
+                  const mediaType = post.media?.[0]?.type || 'image';
+
+                  return (
+                    <NewsFeedCard
+                      key={post.id || post._id}
+                      post={{
+                        id: post.id || post._id,
+                        mediaUrl,
+                        mediaType,
+                        viewCount: String(post.sharesCount || 0),
+                        postTime: new Date(post.createdAt).toLocaleDateString(),
+                        title: post.caption,
+                        likeCount: String(post.likesCount || 0),
+                        commentCount: String(post.commentsCount || 0),
+                        shareCount: String(post.sharesCount || 0),
+                        authorName,
+                        authorImage,
+                        detailsPath: `/news-feed/${post.id || post._id}`,
+                      }}
+                      onDelete={handleDeletePost}
+                    />
+                  );
+                })}
               </div>
-            </section>
-          ))}
+
+              {hasMore && (
+                <div
+                  ref={loadMoreRef}
+                  className="flex h-12 items-center justify-center text-sm-custom font-medium text-text-secondary mt-6"
+                >
+                  {isLoading ? 'Loading posts…' : ''}
+                </div>
+              )}
+            </>
+          )}
+
+          {!error && !isLoading && posts.length === 0 && (
+            <div className="flex h-48 items-center justify-center rounded-xl border border-dashed border-[#DCE5EF] bg-white px-6 text-center text-md-custom font-medium text-text-secondary font-poppins">
+              No news feed posts available.
+            </div>
+          )}
+
+          {isLoading && posts.length === 0 && (
+            <div className="flex h-48 items-center justify-center rounded-xl border border-[#DCE5EF] bg-white text-sm-custom font-medium text-text-secondary font-poppins">
+              Loading news feed…
+            </div>
+          )}
         </div>
       </section>
     </MainLayout>

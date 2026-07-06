@@ -7,9 +7,10 @@ interface MoreActionButtonProps {
     icon?: string;
     onClick?: () => void;
   }>;
+  disabled?: boolean;
 }
 
-export function MoreActionButton({ label = 'Delete Post', items }: MoreActionButtonProps) {
+export function MoreActionButton({ label = 'Delete Post', items, disabled = false }: MoreActionButtonProps) {
   const [isOpen, setIsOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const menuItems = items ?? [{ label, icon: '/icons/table/delete.svg' }];
@@ -33,7 +34,8 @@ export function MoreActionButton({ label = 'Delete Post', items }: MoreActionBut
       <button
         type="button"
         aria-label="More actions"
-        className="flex h-10 w-10"
+        disabled={disabled}
+        className="flex h-10 w-10 disabled:opacity-40"
         onClick={() => setIsOpen((value) => !value)}
       >
         <img src="/icons/profile/dots.svg" alt="" className="h-6 w-6 object-contain" />

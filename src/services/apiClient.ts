@@ -7,6 +7,12 @@ export interface ApiResponse<T = unknown> {
   statusCode: number;
   message: string;
   data?: T;
+  meta?: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
 }
 
 export const apiClient = axios.create({
