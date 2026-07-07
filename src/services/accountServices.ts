@@ -45,7 +45,8 @@ export interface AdminAccount {
   role: AccountRole | 'reporter_pending';
   status: {
     value: string;
-    reason?: string | null;
+    reasonTitle?: string | null;
+    reasonDescription?: string | null;
   };
   newsReportCount: number;
   activeCampaignCount: number;

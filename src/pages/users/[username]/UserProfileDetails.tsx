@@ -79,7 +79,8 @@ export const UserProfileDetails: React.FC = () => {
             reportCount: rawAccount.reportCount ?? 0,
             status: rawAccount.status ? {
               value: rawAccount.status.value,
-              reason: rawAccount.status.reason ?? undefined,
+              reasonTitle: rawAccount.status.reasonTitle ?? undefined,
+              reasonDescription: rawAccount.status.reasonDescription ?? undefined,
             } : undefined,
             posts: postsRes.data?.posts ?? [],
             campaigns: campaignsRes.data?.campaigns ?? [],
@@ -145,7 +146,8 @@ export const UserProfileDetails: React.FC = () => {
                 status: rawAccount.status
                   ? {
                       value: rawAccount.status.value,
-                      reason: rawAccount.status.reason ?? undefined,
+                      reasonTitle: rawAccount.status.reasonTitle ?? undefined,
+                      reasonDescription: rawAccount.status.reasonDescription ?? undefined,
                     }
                   : prev.status,
               }

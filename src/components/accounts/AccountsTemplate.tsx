@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { Check } from 'lucide-react';
+import { Check, Loader2 } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   AccountsHeader,
@@ -56,7 +56,7 @@ function mapReporterRequest(reporter: AdminReporterUser): BaseAccount {
     phoneNumber: reporter.phoneNumber ?? reporter.mobile ?? '-',
     profilePicture: reporter.avatar ?? undefined,
     role: 'reporter_pending',
-    status: { value: 'active', reason: null },
+    status: { value: 'active', reasonTitle: null, reasonDescription: null },
     newsReportCount: 0,
     activeCampaignCount: 0,
     isReported: false,
@@ -184,6 +184,11 @@ const defaultColumns: ColumnConfig<BaseAccount>[] = [
     csvValue: row => row.name,
   },
   {
+    key: 'email',
+    header: 'Email',
+    csvValue: row => row.email,
+  },
+  {
     key: 'phoneNumber',
     header: 'Phone number',
     csvValue: row => {
@@ -215,6 +220,11 @@ const verificationColumns: ColumnConfig<BaseAccount>[] = [
     header: 'Reporter name',
     render: renderUserCell,
     csvValue: row => row.name,
+  },
+  {
+    key: 'email',
+    header: 'Email',
+    csvValue: row => row.email,
   },
   {
     key: 'phoneNumber',
@@ -404,7 +414,7 @@ export const AccountsTemplate: React.FC<AccountsTemplateProps> = ({ role }) => {
           ? {
               ...item,
               isReported: false,
-              status: { value: 'blocked', reason: selectedReason },
+              status: { value: 'blocked', reasonTitle: selectedReason, reasonDescription: null },
             }
           : item
       )
@@ -432,7 +442,8 @@ export const AccountsTemplate: React.FC<AccountsTemplateProps> = ({ role }) => {
                     ...item,
                     status: restoredAccount?.status ?? {
                       value: 'active',
-                      reason: null,
+                      reasonTitle: null,
+                      reasonDescription: null,
                     },
                   }
                 : item
@@ -534,7 +545,17 @@ export const AccountsTemplate: React.FC<AccountsTemplateProps> = ({ role }) => {
   );
 
   const renderStatusReason = (fallback: string) => (row: BaseAccount) => (
-    <span>{row.status.reason || fallback}</span>
+    <div className="flex flex-col gap-1">
+      {row.status.reasonTitle && (
+        <span className="font-medium text-white">{row.status.reasonTitle}</span>
+      )}
+      {row.status.reasonDescription && (
+        <span className="text-sm text-white">{row.status.reasonDescription}</span>
+      )}
+      {!row.status.reasonTitle && !row.status.reasonDescription && (
+        <span className="text-white">{fallback}</span>
+      )}
+    </div>
   );
 
   const handleBulkStatusUpdate = async (selectedIds: string[], status: string) => {
@@ -549,12 +570,31 @@ export const AccountsTemplate: React.FC<AccountsTemplateProps> = ({ role }) => {
     }
   };
 
-  const defaultBulkActions: BulkActionConfig[] = [
-    { label: 'Mark as Active', onClick: (ids) => void handleBulkStatusUpdate(ids, 'active') },
-    { label: 'Mark as In-active', onClick: (ids) => void handleBulkStatusUpdate(ids, 'inactive') },
-    { label: 'Mark as Blocked', onClick: (ids) => void handleBulkStatusUpdate(ids, 'blocked') },
-    { label: 'Mark as Suspend', onClick: (ids) => void handleBulkStatusUpdate(ids, 'suspended') },
-  ];
+  const getBulkActionsForTab = (): BulkActionConfig[] => {
+    const allActions: BulkActionConfig[] = [
+      { label: 'Mark as Active', onClick: (ids) => void handleBulkStatusUpdate(ids, 'active') },
+      { label: 'Mark as In-active', onClick: (ids) => void handleBulkStatusUpdate(ids, 'inactive') },
+      { label: 'Mark as Blocked', onClick: (ids) => void handleBulkStatusUpdate(ids, 'blocked') },
+      { label: 'Mark as Suspend', onClick: (ids) => void handleBulkStatusUpdate(ids, 'suspended') },
+    ];
+
+    switch (activeTab) {
+      case 'active':
+        // Do NOT show "Mark as Active"
+        return allActions.filter(action => action.label !== 'Mark as Active');
+      case 'inactive':
+        // Do NOT show "Mark as In-active"
+        return allActions.filter(action => action.label !== 'Mark as In-active');
+      case 'blocked':
+        // Show ONLY "Mark as Active"
+        return allActions.filter(action => action.label === 'Mark as Active');
+      case 'suspended':
+        // Do NOT show "Mark as In-active" or "Suspend"
+        return allActions.filter(action => action.label !== 'Mark as In-active' && action.label !== 'Mark as Suspend');
+      default:
+        return allActions;
+    }
+  };
 
   const baseActions: ActionConfig<BaseAccount>[] = [
     { icon: EyeIcon, onClick: handleViewProfile, tooltip: 'View Profile' },
@@ -684,41 +724,46 @@ export const AccountsTemplate: React.FC<AccountsTemplateProps> = ({ role }) => {
         {activeTab === 'verification' && verificationError &&
           renderError(verificationError)}
         {activeTab === 'verification' && verificationLoading && (
-          <div className="text-md-custom text-text-secondary rounded-lg border border-[#DCE5EF] bg-white px-4 py-3 font-medium">
-            Fetching verification requests...
+          <div className="flex items-center justify-center rounded-lg border border-[#DCE5EF] bg-white px-4 py-8">
+            <Loader2 className="h-8 w-8 animate-spin text-[#007AFF]" />
           </div>
         )}
-        <DataTable
-          title={getTableTitle()}
-          label={
-            activeTab === 'overview'
-              ? `${tableData.length} recent ${labelSuffix}`
-              : activeTab === 'verification'
-                ? `${tableData.length} verification requests`
-                : meta
-                  ? `${meta.total} ${labelSuffix}`
-                  : undefined
-          }
-          data={activeTab === 'verification'
-            ? verificationLoading ? [] : tableData
-            : isLoading ? [] : tableData}
-          columns={getTableColumns()}
-          actions={getTableActions()}
-          bulkActions={
-            activeTab === 'verification'
-              ? [
-                  { label: 'Approve All', onClick: handleApproveSelected },
-                  { label: 'Reject All', onClick: handleRejectSelected },
-                ]
-              : defaultBulkActions
-          }
-          searchKeys={
-            activeTab === 'verification'
-              ? ['name', 'email', 'phoneNumber', 'journalistId']
-              : ['name', 'email', 'phoneNumber']
-          }
-          itemsPerPage={12}
-        />
+        {activeTab !== 'verification' && isLoading && (
+          <div className="flex items-center justify-center rounded-lg border border-[#DCE5EF] bg-white px-4 py-8">
+            <Loader2 className="h-8 w-8 animate-spin text-[#007AFF]" />
+          </div>
+        )}
+        {!isLoading && (!verificationLoading || activeTab !== 'verification') && (
+          <DataTable
+            title={getTableTitle()}
+            label={
+              activeTab === 'overview'
+                ? `${tableData.length} recent ${labelSuffix}`
+                : activeTab === 'verification'
+                  ? `${tableData.length} verification requests`
+                  : meta
+                    ? `${meta.total} ${labelSuffix}`
+                    : undefined
+            }
+            data={tableData}
+            columns={getTableColumns()}
+            actions={getTableActions()}
+            bulkActions={
+              activeTab === 'verification'
+                ? [
+                    { label: 'Approve All', onClick: handleApproveSelected },
+                    { label: 'Reject All', onClick: handleRejectSelected },
+                  ]
+                : getBulkActionsForTab()
+            }
+            searchKeys={
+              activeTab === 'verification'
+                ? ['name', 'email', 'phoneNumber', 'journalistId']
+                : ['name', 'email', 'phoneNumber']
+            }
+            itemsPerPage={12}
+          />
+        )}
       </div>
     );
   };
