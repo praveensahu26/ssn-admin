@@ -35,10 +35,10 @@ apiClient.interceptors.response.use(
   (response) => response,
   async (error: AxiosError<ApiResponse>) => {
     const statusCode = error.response?.status;
-    const message = error.response?.data?.message?.toLowerCase() ?? '';
     const hadToken = Boolean(getAccessToken());
 
-    if (statusCode === 401 && hadToken && message.includes('jwt expired')) {
+    // Handle any 401 error when we had a token (session expired, invalid token, etc.)
+    if (statusCode === 401 && hadToken) {
       const refreshToken = getRefreshToken();
       
       if (refreshToken) {
@@ -81,7 +81,8 @@ function getErrorMessage(error: unknown) {
     const responseData = error.response?.data as Partial<ApiResponse> | undefined;
     const message = responseData?.message || error.message;
 
-    if (message.toLowerCase().includes('jwt expired')) {
+    const lowerMessage = message.toLowerCase();
+    if (lowerMessage.includes('session expired') || lowerMessage.includes('jwt expired')) {
       return 'Your session expired. Please log in again.';
     }
 

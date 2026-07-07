@@ -12,9 +12,9 @@ export function ProfileInfoItem({ icon, label, value }: ProfileInfoItemProps) {
       <span className=" flex h-6 w-6 -ml-4 shrink-0 items-center justify-center">
         {icon}
       </span>
-      <div className="min-w-0">
+      <div className="min-w-0 flex-1">
         <p className="text-base-custom -ml-2 font-medium leading-5 text-text-primary">{label}</p>
-        <div className="mt-1 -ml-2 text-nowrap text-md-custom font-medium leading-5 text-text-secondary">
+        <div className="mt-1 -ml-2 text-md-custom font-medium leading-5 text-text-secondary">
           {value}
         </div>
       </div>

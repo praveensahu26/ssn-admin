@@ -166,6 +166,9 @@ const CalendarModal: React.FC<CalendarModalProps> = ({
     if (opt !== 'Custom') {
       setRangeStart(null);
       setRangeEnd(null);
+      // Auto-apply for predefined quick options
+      onApply?.({ start: null, end: null, label: opt });
+      onClose();
     }
   };
 

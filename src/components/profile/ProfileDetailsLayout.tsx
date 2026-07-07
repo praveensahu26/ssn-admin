@@ -32,7 +32,8 @@ export interface ProfileDetailsAccount {
   reportCount?: number;
   status?: {
     value: string;
-    reason?: string;
+    reasonTitle?: string;
+    reasonDescription?: string;
   };
   posts?: ProfilePost[];
   campaigns?: ProfileCampaign[];
@@ -84,8 +85,6 @@ function SvgIcon({ src, alt }: { src: string; alt: string }) {
 }
 
 const profileActionItems = [
-  { id: 'messages', label: 'View Messages', icon: '/icons/profile/chat.svg', alt: 'chat' },
-  { id: 'activity', label: 'View {role} Activity', icon: '/icons/profile/view.svg', alt: 'view' },
   { id: 'warning', label: 'Issue Warning', icon: '/icons/profile/warning.svg', alt: 'warning' },
   { id: 'block', label: 'Block {role}', icon: '/icons/profile/remove.svg', alt: 'block' },
   { id: 'suspend', label: 'Suspend Account', icon: '/icons/profile/delete.svg', alt: 'suspend' },
@@ -139,6 +138,7 @@ export function ProfileDetailsLayout({ profile, detailsBasePath, onBack, onModer
   const profileInitials = getInitials(profile.name);
   const statusBanner = getProfileStatusBanner(profile);
   const isSuspended = profile.status?.value === 'suspended';
+  const isBlocked = profile.status?.value === 'blocked';
   const profileRole = location.pathname.startsWith('/reporters') ? 'reporter' : 'user';
   const showProfileImage = Boolean(profile.profilePicture) && !profileImageError;
 
@@ -245,10 +245,10 @@ export function ProfileDetailsLayout({ profile, detailsBasePath, onBack, onModer
               )}
               <div className="mt-7">
                 <div className="flex items-center gap-2">
-                  <h1 className="text-heading font-semibold leading-8 text-text-primary">{profile.name}</h1>
+                  <h1 className="max-w-[300px] truncate text-heading font-semibold leading-8 text-text-primary sm:max-w-none">{profile.name}</h1>
                   <img src="/icons/profile/verified.svg" alt="verified" />
                 </div>
-                <p className="mt-1 text-md-custom font-regular leading-5 text-text-secondary">{profile.username}</p>
+                <p className="mt-1 max-w-[300px] truncate text-md-custom font-regular leading-5 text-text-secondary sm:max-w-none">{profile.username}</p>
               </div>
             </div>
 
@@ -275,23 +275,29 @@ export function ProfileDetailsLayout({ profile, detailsBasePath, onBack, onModer
                 {isActionsOpen && (
                   <div className="absolute right-0 top-[48px] z-30 w-[250px] max-w-[calc(100vw-32px)] rounded-xl border border-[#DCE5EF] bg-white px-3 py-4 shadow-card">
                     <div className="flex flex-col gap-5">
-                      {profileActionItems.map((item) => (
-                        <button
-                          key={item.label}
-                          type="button"
-                          className="flex w-full items-center gap-2 text-left text-md-custom font-medium leading-8 text-text-secondary"
-                          onClick={() => {
-                            setIsActionsOpen(false);
+                      {profileActionItems
+                        .filter((item) => {
+                          if (item.id === 'suspend' && isSuspended) return false;
+                          if (item.id === 'block' && isBlocked) return false;
+                          return true;
+                        })
+                        .map((item) => (
+                          <button
+                            key={item.label}
+                            type="button"
+                            className="flex w-full items-center gap-2 text-left text-md-custom font-medium leading-8 text-text-secondary"
+                            onClick={() => {
+                              setIsActionsOpen(false);
 
-                            if (item.id === 'warning' || item.id === 'block' || item.id === 'suspend') {
-                              setModerationAction(item.id);
-                            }
-                          }}
-                        >
-                          <img src={item.icon} alt={item.alt} className="h-6 w-6 shrink-0 object-contain" />
-                          <span>{item.label.replace('{role}', profileRole === 'reporter' ? 'Reporter' : 'User')}</span>
-                        </button>
-                      ))}
+                              if (item.id === 'warning' || item.id === 'block' || item.id === 'suspend') {
+                                setModerationAction(item.id);
+                              }
+                            }}
+                          >
+                            <img src={item.icon} alt={item.alt} className="h-6 w-6 shrink-0 object-contain" />
+                            <span>{item.label.replace('{role}', profileRole === 'reporter' ? 'Reporter' : 'User')}</span>
+                          </button>
+                        ))}
                     </div>
                   </div>
                 )}
@@ -299,7 +305,7 @@ export function ProfileDetailsLayout({ profile, detailsBasePath, onBack, onModer
             </div>
           </div>
 
-          <div className="mt-5 grid gap-5 lg:grid-cols-[1.4fr_1fr] lg:items-start">
+          <div className="mt-5 grid gap-5 lg:grid-cols-[1.2fr_1fr] lg:items-start">
             <div>
               <h2 className="text-base-custom font-semibold leading-5 text-text-primary">Bio</h2>
               <p className="mt-3 max-w-2xl text-md-custom font-medium leading-6 text-text-secondary">
