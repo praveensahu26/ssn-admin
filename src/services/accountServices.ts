@@ -136,17 +136,17 @@ export const accountServices = {
 
   getPostDetails: (postId: string) =>
     unwrap<{ news: any }>(
-      apiClient.get(`/news/${postId}`)
+      apiClient.get(`/admin/news/${postId}`)
     ),
 
   getPostComments: (postId: string, params: { page?: number; limit?: number } = {}) =>
     unwrap<{ results: any[]; meta: AccountListMeta }>(
-      apiClient.get(`/news/${postId}/comments`, { params })
+      apiClient.get(`/admin/news/${postId}/comments`, { params })
     ),
 
   getPostLikes: (postId: string, params: { page?: number; limit?: number } = {}) =>
     unwrap<{ results: any[]; meta: AccountListMeta }>(
-      apiClient.get(`/news/${postId}/reactions`, { params: { ...params, type: 'like' } })
+      apiClient.get(`/admin/news/${postId}/reactions`, { params: { ...params, type: 'like' } })
     ),
 
   getCampaignDetails: (campaignId: string) =>
