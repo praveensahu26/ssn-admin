@@ -9,6 +9,7 @@ export interface ColumnConfig<T> {
   header: string;
   render?: (row: T) => React.ReactNode;
   csvValue?: (row: T) => string | number | boolean | null | undefined;
+  hidden?: boolean;
 }
 
 type ActionIconProps = { className?: string };
@@ -149,6 +150,9 @@ export function DataTable<T extends { id: string; name?: string; profilePicture?
 
   const renderCell = (row: T, col: ColumnConfig<T>) =>
     col.render ? col.render(row) : (row[col.key as keyof T] as React.ReactNode);
+
+  // Filter out hidden columns for display, but keep them for CSV
+  const visibleColumns = columns.filter(col => !col.hidden);
 
   const renderActionButtons = (row: T, align: 'start' | 'end' = 'end') => (
     <div className={`flex items-center gap-2 ${align === 'end' ? 'justify-end' : 'justify-start'}`}>
@@ -318,7 +322,7 @@ export function DataTable<T extends { id: string; name?: string; profilePicture?
                   </svg>
                 </button>
               </th>
-              {columns.map((col) => (
+              {visibleColumns.map((col) => (
                 <th
                   key={col.key}
                   className="py-4 px-4 text-text-secondary font-medium text-md-custom whitespace-nowrap"
@@ -340,7 +344,7 @@ export function DataTable<T extends { id: string; name?: string; profilePicture?
             {paginatedData.length === 0 ? (
               <tr>
                 <td
-                  colSpan={columns.length + (actions.length > 0 ? 2 : 1)}
+                  colSpan={visibleColumns.length + (actions.length > 0 ? 2 : 1)}
                   className="py-12 text-center text-text-secondary text-md-custom"
                 >
                   No data found
@@ -380,7 +384,7 @@ export function DataTable<T extends { id: string; name?: string; profilePicture?
                     </td>
 
                     {/* Column values */}
-                    {columns.map((col) => (
+                    {visibleColumns.map((col) => (
                       <td key={col.key} className="py-4 px-4 text-text-secondary text-md-custom text-nowrap">
                         {renderCell(row, col)}
                       </td>
@@ -412,7 +416,7 @@ export function DataTable<T extends { id: string; name?: string; profilePicture?
         ) : (
           paginatedData.map((row) => {
             const isSelected = selectedIds.includes(row.id);
-            const [primaryColumn, ...detailColumns] = columns;
+            const [primaryColumn, ...detailColumns] = visibleColumns;
 
             return (
               <article

@@ -186,6 +186,7 @@ const defaultColumns: ColumnConfig<BaseAccount>[] = [
   {
     key: 'email',
     header: 'Email',
+    hidden: true,
     csvValue: row => row.email,
   },
   {
@@ -224,6 +225,7 @@ const verificationColumns: ColumnConfig<BaseAccount>[] = [
   {
     key: 'email',
     header: 'Email',
+    hidden: true,
     csvValue: row => row.email,
   },
   {
@@ -252,8 +254,9 @@ export const AccountsTemplate: React.FC<AccountsTemplateProps> = ({ role }) => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [moderationAction, setModerationAction] = useState<{
-    type: Extract<ModerationActionType, 'warning' | 'block'>;
-    account: BaseAccount;
+    type: Extract<ModerationActionType, 'warning' | 'block' | 'suspend'>;
+    account: BaseAccount | null;
+    accountIds: string[];
   } | null>(null);
   const [activeTab, setActiveTab] = useState<AccountTab>(() => {
     const tab = searchParams.get('tab');
@@ -389,36 +392,51 @@ export const AccountsTemplate: React.FC<AccountsTemplateProps> = ({ role }) => {
   };
 
   const handleModerationAction = (
-    type: Extract<ModerationActionType, 'warning' | 'block'>,
+    type: Extract<ModerationActionType, 'warning' | 'block' | 'suspend'>,
     row: BaseAccount
   ) => {
-    setModerationAction({ type, account: row });
+    setModerationAction({ type, account: row, accountIds: [row.id] });
   };
 
-  const handleModerationSubmit = (payload: {
+  const handleModerationSubmit = async (payload: {
     reasons: string[];
     description: string;
     notifyUser: boolean;
     duration?: string;
   }) => {
-    if (!moderationAction || moderationAction.type !== 'block') return;
+    if (!moderationAction) return;
 
     const selectedReason =
       payload.description.trim() ||
       payload.reasons[0] ||
-      'No block reason provided.';
+      'No reason provided.';
 
-    setAccounts(prev =>
-      prev.map(item =>
-        item.id === moderationAction.account.id
-          ? {
-              ...item,
-              isReported: false,
-              status: { value: 'blocked', reasonTitle: selectedReason, reasonDescription: null },
-            }
-          : item
-      )
-    );
+    const statusValue = moderationAction.type === 'block' ? 'blocked' : 'suspended';
+
+    // Handle bulk operations
+    if (moderationAction.accountIds.length > 1) {
+      await accountServices.bulkUpdateStatus(moderationAction.accountIds, statusValue);
+      setRefreshKey(prev => prev + 1);
+      setModerationAction(null);
+      return;
+    }
+
+    // Handle single account operation
+    if (moderationAction.account) {
+      setAccounts(prev =>
+        prev.map(item =>
+          item.id === moderationAction.account?.id
+            ? {
+                ...item,
+                isReported: false,
+                status: { value: statusValue, reasonTitle: selectedReason, reasonDescription: payload.description },
+              }
+            : item
+        )
+      );
+    }
+
+    setModerationAction(null);
   };
 
   const handleTabChange = (tab: AccountTab) => {
@@ -558,15 +576,24 @@ export const AccountsTemplate: React.FC<AccountsTemplateProps> = ({ role }) => {
     </div>
   );
 
-  const handleBulkStatusUpdate = async (selectedIds: string[], status: string) => {
-    setError(null);
-    try {
-      await accountServices.bulkUpdateStatus(selectedIds, status);
-      setRefreshKey(prev => prev + 1);
-    } catch (err) {
-      setError(
-        err instanceof Error ? err.message : 'Unable to update status for selected accounts'
-      );
+  const handleBulkStatusUpdate = (selectedIds: string[], status: string) => {
+    if (status === 'blocked') {
+      setModerationAction({ type: 'block', account: null, accountIds: selectedIds });
+    } else if (status === 'suspended') {
+      setModerationAction({ type: 'suspend', account: null, accountIds: selectedIds });
+    } else {
+      // For active/inactive, directly call API without drawer
+      void (async () => {
+        setError(null);
+        try {
+          await accountServices.bulkUpdateStatus(selectedIds, status);
+          setRefreshKey(prev => prev + 1);
+        } catch (err) {
+          setError(
+            err instanceof Error ? err.message : 'Unable to update status for selected accounts'
+          );
+        }
+      })();
     }
   };
 
@@ -599,6 +626,23 @@ export const AccountsTemplate: React.FC<AccountsTemplateProps> = ({ role }) => {
   const baseActions: ActionConfig<BaseAccount>[] = [
     { icon: EyeIcon, onClick: handleViewProfile, tooltip: 'View Profile' },
     { icon: DeleteIcon, onClick: handleDelete, tooltip: 'Delete' },
+    {
+      icon: DotsIcon,
+      onClick: () => {},
+      tooltip: 'More Options',
+      menuItems: [
+        {
+          label: 'Block User',
+          icon: <MenuIcon src="/icons/table/remove.svg" alt="block" />,
+          onClick: row => handleModerationAction('block', row),
+        },
+        {
+          label: 'Suspend User',
+          icon: <MenuIcon src="/icons/table/warning.svg" alt="suspend" />,
+          onClick: row => handleModerationAction('suspend', row),
+        },
+      ],
+    },
   ];
 
   const reportedActions: ActionConfig<BaseAccount>[] = [
