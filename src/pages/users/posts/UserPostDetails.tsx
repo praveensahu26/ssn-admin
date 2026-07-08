@@ -94,6 +94,7 @@ export function UserPostDetails() {
           categories: rawPost.categories ? rawPost.categories.map((c: any) => c.name) : [],
         });
 
+        // Use comments and likes from post details response (like NewsFeedPostDetails)
         setComments(
           (rawPost.comments || []).map((c: any) => ({
             commentedUserUsername: c.author?.username || c.author?.name || 'Anonymous',

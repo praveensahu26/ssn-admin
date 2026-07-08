@@ -31,8 +31,7 @@ export const UserProfileDetails: React.FC = () => {
         if (!accountId && username) {
           const searchResponse = await accountServices.listAccounts({
             role: 'user',
-            search: username,
-            limit: 10,
+            limit: 100,
           });
           const match = searchResponse.data?.accounts?.find(
             (acc) => slugifyProfileName(acc.name) === username
@@ -111,12 +110,11 @@ export const UserProfileDetails: React.FC = () => {
     payload: { reasons: string[]; description: string; notifyUser: boolean; duration?: string }
   ) => {
     let accountId = initialAccountId;
-    if (!accountId && profile) {
+    if (!accountId && username) {
       // Find the account id from loaded profile if not in state
       const searchResponse = await accountServices.listAccounts({
         role: 'user',
-        search: username,
-        limit: 10,
+        limit: 100,
       });
       const match = searchResponse.data?.accounts?.find(
         (acc) => slugifyProfileName(acc.name) === username

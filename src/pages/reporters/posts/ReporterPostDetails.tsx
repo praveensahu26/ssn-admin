@@ -8,6 +8,43 @@ import PostInfo from '@/components/posts/PostInfo';
 import PostLikesPanel from '@/components/posts/PostLikesPanel';
 import { accountServices } from '@/services/accountServices';
 
+function getRelativeTime(date: Date): string {
+  const now = new Date();
+  const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+
+  if (diffInSeconds < 60) {
+    return 'now';
+  }
+
+  const diffInMinutes = Math.floor(diffInSeconds / 60);
+  if (diffInMinutes < 60) {
+    return `${diffInMinutes}m`;
+  }
+
+  const diffInHours = Math.floor(diffInMinutes / 60);
+  if (diffInHours < 24) {
+    return `${diffInHours}h`;
+  }
+
+  const diffInDays = Math.floor(diffInHours / 24);
+  if (diffInDays < 7) {
+    return `${diffInDays}d`;
+  }
+
+  const diffInWeeks = Math.floor(diffInDays / 7);
+  if (diffInWeeks < 4) {
+    return `${diffInWeeks}w`;
+  }
+
+  const diffInMonths = Math.floor(diffInDays / 30);
+  if (diffInMonths < 12) {
+    return `${diffInMonths}mo`;
+  }
+
+  const diffInYears = Math.floor(diffInDays / 365);
+  return `${diffInYears}y`;
+}
+
 export function ReporterPostDetails() {
   const { postId } = useParams<{ username: string; postId: string }>();
   const [rightPanel, setRightPanel] = useState<'comments' | 'likes'>('comments');
@@ -25,12 +62,8 @@ export function ReporterPostDetails() {
       try {
         setIsLoading(true);
         setError(null);
-        
-        const [postRes, commentsRes, likesRes] = await Promise.all([
-          accountServices.getPostDetails(postId),
-          accountServices.getPostComments(postId, { limit: 100 }),
-          accountServices.getPostLikes(postId, { limit: 100 }),
-        ]);
+
+        const postRes = await accountServices.getPostDetails(postId);
 
         const rawPost = postRes.data?.news;
         if (!rawPost) {
@@ -55,24 +88,32 @@ export function ReporterPostDetails() {
           title: rawPost.caption || '',
           likeCount: String(rawPost.likesCount || 0),
           commentCount: String(rawPost.commentsCount || 0),
-          shareCount: '0',
+          shareCount: String(rawPost.shareCount || rawPost.sharesCount || 0),
           description: rawPost.description || '',
           location: rawPost.location || 'Unknown',
           categories: rawPost.categories ? rawPost.categories.map((c: any) => c.name) : [],
         });
 
+        // Use comments and likes from post details response (like NewsFeedPostDetails)
         setComments(
-          (commentsRes.data?.results || []).map((c: any) => ({
-            commentedUserUsername: c.author?.name || 'Anonymous',
+          (rawPost.comments || []).map((c: any) => ({
+            commentedUserUsername: c.author?.username || c.author?.name || 'Anonymous',
             userProfilePic: c.author?.avatar || '',
             commentText: c.text || '',
-            commentTime: new Date(c.createdAt).toLocaleDateString(),
-            commentLikeCount: '0',
+            commentTime: getRelativeTime(new Date(c.createdAt)),
+            commentLikeCount: String(c.likesCount || 0),
+            replies: (c.replies || []).map((r: any) => ({
+              image: r.author?.avatar || '',
+              username: r.author?.username || r.author?.name || 'Anonymous',
+              text: r.text || '',
+              time: getRelativeTime(new Date(r.createdAt)),
+              likeCount: String(r.likesCount || 0),
+            })),
           }))
         );
 
         setLikes(
-          (likesRes.data?.results || []).map((l: any) => ({
+          (rawPost.likes || []).map((l: any) => ({
             userProfilePic: l.user?.avatar || '',
             userName: l.user?.name || 'Unknown',
             username: l.user?.username || `@${(l.user?.name || '').toLowerCase().replace(/\s+/g, '')}`,
