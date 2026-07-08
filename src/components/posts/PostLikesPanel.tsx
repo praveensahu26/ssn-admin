@@ -13,12 +13,10 @@ interface PostLikesPanelProps {
 }
 
 export function PostLikesPanel({ count, likes }: PostLikesPanelProps) {
-  const repeatedLikes = likes.length ? Array.from({ length: 4 }, () => likes).flat() : [];
-
   return (
     <RightPanel title="Likes" count={`${count} Likes`}>
       <div className="space-y-3">
-        {repeatedLikes.map((like, index) => (
+        {likes.map((like, index) => (
           <LikeUserItem
             key={`${like.username}-${index}`}
             image={like.userProfilePic}
@@ -26,6 +24,9 @@ export function PostLikesPanel({ count, likes }: PostLikesPanelProps) {
             username={like.username.replace('@', '')}
           />
         ))}
+        {likes.length === 0 && (
+          <div className="text-center text-gray-500 py-4">No likes yet</div>
+        )}
       </div>
     </RightPanel>
   );
