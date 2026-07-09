@@ -29,10 +29,11 @@ function formatCount(value: number): string {
 function mapApiCampaignToCard(campaign: AdminCampaign) {
   // The server uses 'pending' internally; map it to 'requested' for the UI.
   const status = campaign.status === 'pending' ? 'requested' : campaign.status;
+  const attachments = campaign.attachments || [];
   return {
     id: campaign.id || campaign._id,
-    mediaUrl: campaign.attachments?.[0]?.url ?? '',
-    mediaType: campaign.attachments?.[0]?.type ?? 'image',
+    mediaUrl: attachments[0]?.url ?? '',
+    mediaType: attachments[0]?.type ?? 'image',
     viewCount: String(campaign.viewsCount ?? 0),
     postTime: new Date(campaign.createdAt).toLocaleDateString('en-US', {
       month: 'short',

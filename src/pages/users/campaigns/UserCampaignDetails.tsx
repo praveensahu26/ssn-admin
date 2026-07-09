@@ -42,6 +42,7 @@ export function UserCampaignDetails() {
           id: rawCampaign.id,
           mediaUrl: rawCampaign.attachments?.[0]?.url || '',
           mediaType: rawCampaign.attachments?.[0]?.type || 'image',
+          media: rawCampaign.attachments || [],
           viewCount: String(rawCampaign.viewsCount || 0),
           postTime: new Date(rawCampaign.createdAt).toLocaleDateString('en-US', {
             month: 'short',

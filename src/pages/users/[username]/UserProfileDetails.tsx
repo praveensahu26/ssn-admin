@@ -81,7 +81,13 @@ export const UserProfileDetails: React.FC = () => {
               reasonTitle: rawAccount.status.reasonTitle ?? undefined,
               reasonDescription: rawAccount.status.reasonDescription ?? undefined,
             } : undefined,
-            posts: postsRes.data?.posts ?? [],
+            posts: (postsRes.data?.posts ?? []).map((post: any) => ({
+              id: post.id,
+              mediaUrl: post.media?.[0]?.url || '',
+              media: post.media || [],
+              viewCount: post.viewCount || '0',
+              categories: post.categories || [],
+            })),
             campaigns: campaignsRes.data?.campaigns ?? [],
           };
 

@@ -160,8 +160,9 @@ export function NewsFeedPage() {
                 {posts.map((post) => {
                   const authorName = post.author?.name || 'Unknown';
                   const authorImage = post.author?.avatar || undefined;
-                  const mediaUrl = post.media?.[0]?.url || '';
-                  const mediaType = post.media?.[0]?.type || 'image';
+                  const media = post.media || [];
+                  const mediaUrl = media[0]?.url ?? '';
+                  const mediaType = media[0]?.type ?? 'image';
 
                   return (
                     <NewsFeedCard
@@ -170,7 +171,8 @@ export function NewsFeedPage() {
                         id: post.id || post._id,
                         mediaUrl,
                         mediaType,
-                        viewCount: String(post.sharesCount || 0),
+                        media,
+                        viewCount: String(post.viewsCount || 0),
                         postTime: new Date(post.createdAt).toLocaleDateString(),
                         title: post.caption,
                         likeCount: String(post.likesCount || 0),
@@ -180,6 +182,7 @@ export function NewsFeedPage() {
                         authorImage,
                         detailsPath: `/news-feed/${post.id || post._id}`,
                       }}
+                      showViewBadge={true}
                       onDelete={handleDeletePost}
                     />
                   );

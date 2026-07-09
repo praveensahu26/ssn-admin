@@ -31,6 +31,7 @@ export interface AdminNewsPost {
   dislikesCount: number;
   commentsCount: number;
   sharesCount: number;
+  viewsCount: number;
   createdAt: string;
   updatedAt: string;
 }

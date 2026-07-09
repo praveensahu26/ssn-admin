@@ -79,6 +79,7 @@ export function NewsFeedPostDetails() {
           id: rawPost.id,
           mediaUrl: rawPost.media?.[0]?.url || '',
           mediaType: rawPost.media?.[0]?.type || 'image',
+          media: rawPost.media || [],
           viewCount: String(rawPost.viewsCount || 0),
           postTime: new Date(rawPost.createdAt).toLocaleDateString('en-US', {
             month: 'short',
