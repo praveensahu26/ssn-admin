@@ -20,7 +20,7 @@ export function CategoryTags({ categories }: CategoryTagsProps) {
         <span>Categories</span>
       </div>
       <p className="mt-1 pl-7 text-sm-custom font-medium leading-5 text-text-secondary">
-        {items.map((category) => `.${category}`).join(' ')}
+        {items.join(', ')}
       </p>
     </div>
   );

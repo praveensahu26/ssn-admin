@@ -91,6 +91,8 @@ function getMenuItems(status) {
 }
 
 export function CampaignCard({ campaign, detailsHref }) {
+  const attachments = campaign.attachments || [];
+  const hasMultipleAttachments = attachments.length > 1;
   const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isSuspendDrawerOpen, setIsSuspendDrawerOpen] = useState(false);
@@ -135,12 +137,22 @@ export function CampaignCard({ campaign, detailsHref }) {
       }}
     >
       <div className="relative aspect-[1.44/1] overflow-hidden rounded-t-xl bg-[#E8EEF6]">
-        <img src={campaign.mediaUrl} alt={campaign.title} className="h-full w-full object-cover" />
+        {campaign.mediaType === 'video' ? (
+          <video src={campaign.mediaUrl} className="h-full w-full object-cover" />
+        ) : (
+          <img src={campaign.mediaUrl} alt={campaign.title} className="h-full w-full object-cover" />
+        )}
 
         <div className="absolute left-3 top-3 flex h-6 items-center gap-1 rounded-full border border-[#505F70] bg-[#505F7094] px-2 text-sm-custom font-medium leading-none text-white">
           <img src={iconPaths.eye} alt="" className="h-5 w-5 brightness-0 invert" />
           <span>{campaign.viewCount}</span>
         </div>
+
+        {hasMultipleAttachments && (
+          <div className="absolute bottom-3 right-3 flex h-6 items-center gap-1 rounded-full bg-black/50 px-2 text-xs-custom font-medium text-white">
+            <span>{attachments.length}</span>
+          </div>
+        )}
 
         <div className="absolute right-3 top-3 max-w-[calc(100%-90px)] truncate rounded-full border border-[#505F70] bg-[#505F7094] px-3 py-1 text-sm-custom font-medium leading-4 text-white">
           {category}

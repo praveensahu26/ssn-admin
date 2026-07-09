@@ -22,6 +22,7 @@ function mapCampaign(raw: AdminCampaign) {
     id: raw.id || raw._id,
     mediaUrl: raw.attachments?.[0]?.url ?? '',
     mediaType: raw.attachments?.[0]?.type ?? 'image',
+    media: raw.attachments || [],
     viewCount: String(raw.viewsCount ?? 0),
     postTime: new Date(raw.createdAt).toLocaleDateString('en-US', {
       month: 'short',

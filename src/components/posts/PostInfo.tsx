@@ -6,10 +6,16 @@ import MoreActionButton from '@/components/details/MoreActionButton';
 import StatsActionBar from '@/components/details/StatsActionBar';
 import UserMiniProfile from '@/components/details/UserMiniProfile';
 
+interface MediaItem {
+  url: string;
+  type: 'image' | 'video';
+}
+
 interface PostInfoProps {
   post: {
     mediaUrl: string;
     mediaType?: string;
+    media?: MediaItem[];
     viewCount: string;
     postTime: string;
     title: string;
@@ -37,6 +43,7 @@ export function PostInfo({ post, author, onShowLikes, onShowComments, onDelete }
         alt={post.title}
         viewCount={post.viewCount}
         mediaType={post.mediaType}
+        media={post.media}
       />
 
       <div className="mt-4 flex items-start justify-between gap-2">

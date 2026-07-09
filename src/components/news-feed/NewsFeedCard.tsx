@@ -2,10 +2,16 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useEffect, useRef } from 'react';
 
+export interface MediaItem {
+  url: string;
+  type: 'image' | 'video';
+}
+
 export interface NewsFeedPost {
   id: string;
   mediaUrl: string;
   mediaType?: string;
+  media?: MediaItem[];
   viewCount: string;
   postTime: string;
   title: string;
@@ -130,7 +136,18 @@ export function NewsFeedCard({ post, showViewBadge = false, onDelete }: NewsFeed
       }}
     >
       <div className="relative aspect-[1.45/1] overflow-hidden bg-[#E8EEF6]">
-        <img src={post.mediaUrl} alt={post.title} className="h-full w-full object-cover" />
+        {post.mediaType === 'video' ? (
+          <video src={post.mediaUrl} className="h-full w-full object-cover" />
+        ) : (
+          <img src={post.mediaUrl} alt={post.title} className="h-full w-full object-cover" />
+        )}
+
+        {/* Multiple media indicator */}
+        {post.media && post.media.length > 1 && (
+          <div className="absolute bottom-3 right-3 flex h-6 items-center gap-1 rounded-full bg-black/50 px-2 text-xs-custom font-medium text-white">
+            <span>{post.media.length}</span>
+          </div>
+        )}
 
         {/* Badges container */}
         <div className="absolute left-3 top-3 flex flex-col gap-1 z-10">
