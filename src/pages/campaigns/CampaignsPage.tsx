@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { Loader2 } from 'lucide-react';
 import MainLayout from '@/components/layout/MainLayout';
 import StatCard from '@/components/dashboard/StatCard';
 import CampaignCard from '@/components/campaigns/CampaignCard';
@@ -10,6 +11,7 @@ import {
   type CampaignStats,
   type CampaignTab,
 } from '@/services/adminCampaignServices';
+import { getRelativeTime } from '@/utils/relativeTime';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -35,11 +37,7 @@ function mapApiCampaignToCard(campaign: AdminCampaign) {
     mediaUrl: attachments[0]?.url ?? '',
     mediaType: attachments[0]?.type ?? 'image',
     viewCount: String(campaign.viewsCount ?? 0),
-    postTime: new Date(campaign.createdAt).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-    }),
+    postTime: getRelativeTime(campaign.createdAt),
     status,
     postedBy: {
       name: campaign.organizer?.name ?? 'Unknown',
@@ -267,9 +265,9 @@ export function CampaignsPage() {
               {hasMore && (
                 <div
                   ref={loadMoreRef}
-                  className="flex h-12 items-center justify-center text-sm-custom font-medium text-text-secondary"
+                  className="flex h-12 items-center justify-center"
                 >
-                  {isLoadingCampaigns ? 'Loading campaigns…' : ''}
+                  {isLoadingCampaigns ? <Loader2 className="h-6 w-6 animate-spin text-[#007AFF]" /> : ''}
                 </div>
               )}
             </>

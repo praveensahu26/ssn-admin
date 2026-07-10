@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
+import { Loader2 } from 'lucide-react';
 import DetailsHeader from '@/components/details/DetailsHeader';
 import DetailsLayout from '@/components/details/DetailsLayout';
 import MainLayout from '@/components/layout/MainLayout';
@@ -81,11 +82,7 @@ export function NewsFeedPostDetails() {
           mediaType: rawPost.media?.[0]?.type || 'image',
           media: rawPost.media || [],
           viewCount: String(rawPost.viewsCount || rawPost.viewCount || 0),
-          postTime: new Date(rawPost.createdAt).toLocaleDateString('en-US', {
-            month: 'short',
-            day: 'numeric',
-            year: 'numeric',
-          }),
+          postTime: getRelativeTime(new Date(rawPost.createdAt)),
           title: rawPost.caption || '',
           likeCount: String(rawPost.likesCount || rawPost.likes?.length || 0),
           commentCount: String(rawPost.commentsCount || rawPost.comments?.length || 0),
@@ -130,8 +127,8 @@ export function NewsFeedPostDetails() {
   if (isLoading) {
     return (
       <MainLayout>
-        <div className="rounded-lg border border-[#DCE5EF] bg-white p-8 text-center text-lg font-medium text-text-secondary">
-          Loading post details...
+        <div className="flex items-center justify-center rounded-lg border border-[#DCE5EF] bg-white px-4 py-8">
+          <Loader2 className="h-8 w-8 animate-spin text-[#007AFF]" />
         </div>
       </MainLayout>
     );

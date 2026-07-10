@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
+import { Loader2 } from 'lucide-react';
 import CampaignInfo from '@/components/campaigns/CampaignInfo';
 import WordsOfSupportPanel from '@/components/campaigns/WordsOfSupportPanel';
 import DetailsHeader from '@/components/details/DetailsHeader';
 import DetailsLayout from '@/components/details/DetailsLayout';
 import MainLayout from '@/components/layout/MainLayout';
 import { accountServices } from '@/services/accountServices';
+import { getRelativeTime } from '@/utils/relativeTime';
 
 export function ReporterCampaignDetails() {
   const { id } = useParams<{ username: string; id: string }>();
@@ -44,11 +46,7 @@ export function ReporterCampaignDetails() {
           mediaType: rawCampaign.attachments?.[0]?.type || 'image',
           media: rawCampaign.attachments || [],
           viewCount: String(rawCampaign.viewsCount || 0),
-          postTime: new Date(rawCampaign.createdAt).toLocaleDateString('en-US', {
-            month: 'short',
-            day: 'numeric',
-            year: 'numeric',
-          }),
+          postTime: getRelativeTime(rawCampaign.createdAt),
           title: rawCampaign.caption || '',
           status: rawCampaign.status || 'active',
           description: rawCampaign.description || '',
@@ -79,8 +77,8 @@ export function ReporterCampaignDetails() {
   if (isLoading) {
     return (
       <MainLayout>
-        <div className="rounded-lg border border-[#DCE5EF] bg-white p-8 text-center text-lg font-medium text-text-secondary">
-          Loading campaign details...
+        <div className="flex items-center justify-center rounded-lg border border-[#DCE5EF] bg-white px-4 py-8">
+          <Loader2 className="h-8 w-8 animate-spin text-[#007AFF]" />
         </div>
       </MainLayout>
     );
