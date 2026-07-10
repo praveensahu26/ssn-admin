@@ -22,11 +22,13 @@ function getInitials(name) {
 }
 
 function compactTime(postTime) {
-  const normalized = postTime?.toLowerCase().replace(' ago', '') ?? '1w';
+  const normalized = postTime?.toLowerCase() ?? '1w';
 
-  if (normalized.includes('hour') || normalized.includes('h')) return normalized.replace('hours', 'h').replace('hour', 'h');
-  if (normalized.includes('day') || normalized.includes('d')) return normalized.replace('days', 'd').replace('day', 'd');
-  if (normalized.includes('week') || normalized.includes('w')) return normalized.replace('weeks', 'w').replace('week', 'w');
+  if (normalized.includes('hour')) return normalized.replace('hours', 'h').replace('hour', 'h');
+  if (normalized.includes('day')) return normalized.replace('days', 'd').replace('day', 'd');
+  if (normalized.includes('week')) return normalized.replace('weeks', 'w').replace('week', 'w');
+  if (normalized.includes('month')) return normalized.replace('months', 'mo').replace('month', 'mo');
+  if (normalized.includes('year')) return normalized.replace('years', 'y').replace('year', 'y');
 
   return normalized;
 }

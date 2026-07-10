@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
+import { Loader2 } from 'lucide-react';
 import DetailsHeader from '@/components/details/DetailsHeader';
 import DetailsLayout from '@/components/details/DetailsLayout';
 import MainLayout from '@/components/layout/MainLayout';
@@ -7,43 +8,7 @@ import PostCommentsPanel from '@/components/posts/PostCommentsPanel';
 import PostInfo from '@/components/posts/PostInfo';
 import PostLikesPanel from '@/components/posts/PostLikesPanel';
 import { accountServices } from '@/services/accountServices';
-
-function getRelativeTime(date: Date): string {
-  const now = new Date();
-  const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
-
-  if (diffInSeconds < 60) {
-    return 'now';
-  }
-
-  const diffInMinutes = Math.floor(diffInSeconds / 60);
-  if (diffInMinutes < 60) {
-    return `${diffInMinutes}m`;
-  }
-
-  const diffInHours = Math.floor(diffInMinutes / 60);
-  if (diffInHours < 24) {
-    return `${diffInHours}h`;
-  }
-
-  const diffInDays = Math.floor(diffInHours / 24);
-  if (diffInDays < 7) {
-    return `${diffInDays}d`;
-  }
-
-  const diffInWeeks = Math.floor(diffInDays / 7);
-  if (diffInWeeks < 4) {
-    return `${diffInWeeks}w`;
-  }
-
-  const diffInMonths = Math.floor(diffInDays / 30);
-  if (diffInMonths < 12) {
-    return `${diffInMonths}mo`;
-  }
-
-  const diffInYears = Math.floor(diffInDays / 365);
-  return `${diffInYears}y`;
-}
+import { getRelativeTime } from '@/utils/relativeTime';
 
 export function ReporterPostDetails() {
   const { postId } = useParams<{ username: string; postId: string }>();
@@ -81,11 +46,7 @@ export function ReporterPostDetails() {
           mediaType: rawPost.media?.[0]?.type || 'image',
           media: rawPost.media || [],
           viewCount: String(rawPost.viewsCount || 0),
-          postTime: new Date(rawPost.createdAt).toLocaleDateString('en-US', {
-            month: 'short',
-            day: 'numeric',
-            year: 'numeric',
-          }),
+          postTime: getRelativeTime(rawPost.createdAt),
           title: rawPost.caption || '',
           likeCount: String(rawPost.likesCount || 0),
           commentCount: String(rawPost.commentsCount || 0),
@@ -131,8 +92,8 @@ export function ReporterPostDetails() {
   if (isLoading) {
     return (
       <MainLayout>
-        <div className="rounded-lg border border-[#DCE5EF] bg-white p-8 text-center text-lg font-medium text-text-secondary">
-          Loading post details...
+        <div className="flex items-center justify-center rounded-lg border border-[#DCE5EF] bg-white px-4 py-8">
+          <Loader2 className="h-8 w-8 animate-spin text-[#007AFF]" />
         </div>
       </MainLayout>
     );

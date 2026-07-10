@@ -1,9 +1,11 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { Loader2 } from 'lucide-react';
 import MainLayout from '@/components/layout/MainLayout';
 import NewsFeedCard from '@/components/news-feed/NewsFeedCard';
 import { adminNewsServices, type AdminNewsPost } from '@/services/adminNewsServices';
 import { apiClient } from '@/services/apiClient';
+import { getRelativeTime } from '@/utils/relativeTime';
 
 const PAGE_SIZE = 12;
 
@@ -173,7 +175,7 @@ export function NewsFeedPage() {
                         mediaType,
                         media,
                         viewCount: String(post.viewsCount || 0),
-                        postTime: new Date(post.createdAt).toLocaleDateString(),
+                        postTime: getRelativeTime(post.createdAt),
                         title: post.caption,
                         likeCount: String(post.likesCount || 0),
                         commentCount: String(post.commentsCount || 0),
@@ -192,9 +194,9 @@ export function NewsFeedPage() {
               {hasMore && (
                 <div
                   ref={loadMoreRef}
-                  className="flex h-12 items-center justify-center text-sm-custom font-medium text-text-secondary mt-6"
+                  className="flex h-12 items-center justify-center mt-6"
                 >
-                  {isLoading ? 'Loading posts…' : ''}
+                  {isLoading ? <Loader2 className="h-6 w-6 animate-spin text-[#007AFF]" /> : ''}
                 </div>
               )}
             </>
@@ -207,8 +209,8 @@ export function NewsFeedPage() {
           )}
 
           {isLoading && posts.length === 0 && (
-            <div className="flex h-48 items-center justify-center rounded-xl border border-[#DCE5EF] bg-white text-sm-custom font-medium text-text-secondary font-poppins">
-              Loading news feed…
+            <div className="flex h-48 items-center justify-center rounded-xl border border-[#DCE5EF] bg-white">
+              <Loader2 className="h-8 w-8 animate-spin text-[#007AFF]" />
             </div>
           )}
         </div>

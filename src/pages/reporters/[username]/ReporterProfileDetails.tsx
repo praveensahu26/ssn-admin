@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import { Loader2 } from 'lucide-react';
 import MainLayout from '@/components/layout/MainLayout';
 import ProfileDetailsLayout, { type ProfileDetailsAccount } from '@/components/profile/ProfileDetailsLayout';
 import { slugifyProfileName } from '@/utils/profileRoutes';
@@ -167,8 +168,8 @@ export const ReporterProfileDetails: React.FC = () => {
   return (
     <MainLayout>
       {isLoading ? (
-        <div className="rounded-lg border border-[#DCE5EF] bg-white p-8 text-center text-md font-medium text-text-secondary">
-          Loading profile...
+        <div className="flex items-center justify-center rounded-lg border border-[#DCE5EF] bg-white px-4 py-8">
+          <Loader2 className="h-8 w-8 animate-spin text-[#007AFF]" />
         </div>
       ) : error || !profile ? (
         <div className="rounded-lg border border-red-200 bg-red-50 p-8 text-center text-md font-medium text-red-700">

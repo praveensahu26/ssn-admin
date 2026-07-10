@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
+import { Loader2 } from 'lucide-react';
 import CampaignInfo from '@/components/campaigns/CampaignInfo';
 import WordsOfSupportPanel from '@/components/campaigns/WordsOfSupportPanel';
 import DetailsHeader from '@/components/details/DetailsHeader';
@@ -11,6 +12,7 @@ import {
   type AdminCampaign,
   type SuspensionReason,
 } from '@/services/adminCampaignServices';
+import { getRelativeTime } from '@/utils/relativeTime';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -24,11 +26,7 @@ function mapCampaign(raw: AdminCampaign) {
     mediaType: raw.attachments?.[0]?.type ?? 'image',
     media: raw.attachments || [],
     viewCount: String(raw.viewsCount ?? 0),
-    postTime: new Date(raw.createdAt).toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric',
-    }),
+    postTime: getRelativeTime(raw.createdAt),
     title: raw.caption ?? '',
     status,
     description: raw.description ?? '',
@@ -163,8 +161,8 @@ export function CampaignDetailsPage() {
   if (isLoading) {
     return (
       <MainLayout>
-        <div className="rounded-lg border border-[#DCE5EF] bg-white p-8 text-center text-lg font-medium text-text-secondary">
-          Loading campaign details...
+        <div className="flex items-center justify-center rounded-lg border border-[#DCE5EF] bg-white px-4 py-8">
+          <Loader2 className="h-8 w-8 animate-spin text-[#007AFF]" />
         </div>
       </MainLayout>
     );
