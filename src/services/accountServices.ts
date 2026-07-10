@@ -52,6 +52,7 @@ export interface AdminAccount {
   activeCampaignCount: number;
   isReported: boolean;
   reportCount?: number;
+  isVerified?: boolean;
   gender?: string | null;
   journalistId?: string | null;
   verificationRequest?: string | null;

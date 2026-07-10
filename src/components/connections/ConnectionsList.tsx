@@ -10,9 +10,7 @@ export default function ConnectionsList({ data, query }: ConnectionsListProps) {
   const filteredData = normalizedQuery
     ? data.filter((profile) => {
         const name = profile.name.toLowerCase();
-        const username = profile.username.toLowerCase();
-
-        return name.includes(normalizedQuery) || username.includes(normalizedQuery);
+        return name.includes(normalizedQuery);
       })
     : data;
 
@@ -27,7 +25,7 @@ export default function ConnectionsList({ data, query }: ConnectionsListProps) {
   return (
     <div>
       {filteredData.map((profile, index) => (
-        <ConnectionListItem key={`${profile.username}-${index}`} profile={profile} />
+        <ConnectionListItem key={`${profile.name}-${index}`} profile={profile} />
       ))}
     </div>
   );

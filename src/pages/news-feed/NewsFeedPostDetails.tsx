@@ -76,19 +76,19 @@ export function NewsFeedPostDetails() {
         });
 
         setPost({
-          id: rawPost.id,
+          id: rawPost.id || rawPost._id,
           mediaUrl: rawPost.media?.[0]?.url || '',
           mediaType: rawPost.media?.[0]?.type || 'image',
           media: rawPost.media || [],
-          viewCount: String(rawPost.viewsCount || 0),
+          viewCount: String(rawPost.viewsCount || rawPost.viewCount || 0),
           postTime: new Date(rawPost.createdAt).toLocaleDateString('en-US', {
             month: 'short',
             day: 'numeric',
             year: 'numeric',
           }),
           title: rawPost.caption || '',
-          likeCount: String(rawPost.likesCount || 0),
-          commentCount: String(rawPost.commentsCount || 0),
+          likeCount: String(rawPost.likesCount || rawPost.likes?.length || 0),
+          commentCount: String(rawPost.commentsCount || rawPost.comments?.length || 0),
           shareCount: String(rawPost.shareCount || rawPost.sharesCount || 0),
           description: rawPost.description || '',
           location: rawPost.location || 'Unknown',
@@ -97,14 +97,14 @@ export function NewsFeedPostDetails() {
 
         setComments(
           (rawPost.comments || []).map((c: any) => ({
-            commentedUserUsername: c.author?.username || c.author?.name || 'Anonymous',
+            commentedUserUsername: c.author?.name || 'Anonymous',
             userProfilePic: c.author?.avatar || '',
             commentText: c.text || '',
             commentTime: getRelativeTime(new Date(c.createdAt)),
             commentLikeCount: String(c.likesCount || 0),
             replies: (c.replies || []).map((r: any) => ({
               image: r.author?.avatar || '',
-              username: r.author?.username || r.author?.name || 'Anonymous',
+              username: r.author?.name || 'Anonymous',
               text: r.text || '',
               time: getRelativeTime(new Date(r.createdAt)),
               likeCount: String(r.likesCount || 0),
@@ -116,7 +116,6 @@ export function NewsFeedPostDetails() {
           (rawPost.likes || []).map((l: any) => ({
             userProfilePic: l.user?.avatar || '',
             userName: l.user?.name || 'Unknown',
-            username: l.user?.username || `@${(l.user?.name || '').toLowerCase().replace(/\s+/g, '')}`,
           }))
         );
       } catch (err) {

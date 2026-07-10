@@ -3,7 +3,7 @@ import { useState } from 'react';
 interface LikeUserItemProps {
   image?: string;
   name: string;
-  username: string;
+  username?: string;
 }
 
 function getInitials(name: string): string {
@@ -21,7 +21,7 @@ function getInitials(name: string): string {
   return mainPart.slice(0, 2).toUpperCase() || '??';
 }
 
-export function LikeUserItem({ image, name, username }: LikeUserItemProps) {
+export function LikeUserItem({ image, name }: LikeUserItemProps) {
   const [imgError, setImgError] = useState(false);
   const initials = getInitials(name);
   const showImage = image && !imgError;
@@ -42,7 +42,6 @@ export function LikeUserItem({ image, name, username }: LikeUserItemProps) {
       )}
       <div className="min-w-0">
         <p className="truncate text-md-custom font-medium leading-5 text-text-primary">{name}</p>
-        <p className="truncate text-sm-custom font-medium leading-4 text-text-secondary">{username}</p>
       </div>
     </article>
   );

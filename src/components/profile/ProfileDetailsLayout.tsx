@@ -30,6 +30,7 @@ export interface ProfileDetailsAccount {
   following?: ConnectionProfile[];
   isReported?: boolean;
   reportCount?: number;
+  isVerified?: boolean;
   status?: {
     value: string;
     reasonTitle?: string;
@@ -123,7 +124,7 @@ export function ProfileDetailsLayout({ profile, detailsBasePath, onBack, onModer
   const [searchParams, setSearchParams] = useSearchParams();
   const activeContent = searchParams.get('tab') === 'campaigns' ? 'campaigns' : 'posts';
   const activePostCategory = searchParams.get('postCategory') ?? 'All';
-  const activeCampaignCategory = searchParams.get('campaignCategory') ?? undefined;
+  const activeCampaignCategory = searchParams.get('campaignCategory') ?? 'All';
   const [isActionsOpen, setIsActionsOpen] = useState(false);
   const [isMessageDrawerOpen, setIsMessageDrawerOpen] = useState(false);
   const [isReportsDrawerOpen, setIsReportsDrawerOpen] = useState(false);
@@ -246,9 +247,10 @@ export function ProfileDetailsLayout({ profile, detailsBasePath, onBack, onModer
               <div className="mt-7">
                 <div className="flex items-center gap-2">
                   <h1 className="max-w-[300px] truncate text-heading font-semibold leading-8 text-text-primary sm:max-w-none">{profile.name}</h1>
-                  <img src="/icons/profile/verified.svg" alt="verified" />
+                  {profileRole === 'reporter' && profile.isVerified && (
+                    <img src="/icons/profile/verified.svg" alt="verified" />
+                  )}
                 </div>
-                <p className="mt-1 max-w-[300px] truncate text-md-custom font-regular leading-5 text-text-secondary sm:max-w-none">{profile.username}</p>
               </div>
             </div>
 

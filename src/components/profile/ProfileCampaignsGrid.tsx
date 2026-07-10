@@ -28,20 +28,15 @@ export function ProfileCampaignsGrid({
   getCampaignHref,
 }: ProfileCampaignsGridProps) {
   const categories = useMemo(
-    () => Array.from(new Set(campaigns.flatMap(getCampaignCategories))),
+    () => ['All', ...Array.from(new Set(campaigns.flatMap(getCampaignCategories)))],
     [campaigns]
   );
-  const [internalActiveCategory, setInternalActiveCategory] = useState(categories[0] ?? 'All');
+  const [internalActiveCategory, setInternalActiveCategory] = useState('All');
   const selectedCategory = activeCategory ?? internalActiveCategory;
 
   useEffect(() => {
-    if (!categories.length) {
-      setInternalActiveCategory('All');
-      return;
-    }
-
     if (!activeCategory && !categories.includes(internalActiveCategory)) {
-      setInternalActiveCategory(categories[0] ?? 'All');
+      setInternalActiveCategory('All');
     }
   }, [activeCategory, categories, internalActiveCategory]);
 

@@ -2,7 +2,7 @@ import { useState } from 'react';
 
 export interface ConnectionProfile {
   name: string;
-  username: string;
+  username?: string;
   profilePic?: string;
   profilePicture?: string;
 }
@@ -48,7 +48,6 @@ export default function ConnectionListItem({ profile }: ConnectionListItemProps)
       )}
       <div className="min-w-0">
         <p className="truncate text-md-custom font-medium leading-5 text-text-primary">{profile.name}</p>
-        <p className="truncate text-sm-custom font-medium leading-4 text-text-secondary">{profile.username}</p>
       </div>
     </div>
   );

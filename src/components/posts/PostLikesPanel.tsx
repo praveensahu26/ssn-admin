@@ -4,7 +4,6 @@ import LikeUserItem from '@/components/posts/LikeUserItem';
 interface PostLike {
   userProfilePic: string;
   userName: string;
-  username: string;
 }
 
 interface PostLikesPanelProps {
@@ -18,10 +17,9 @@ export function PostLikesPanel({ count, likes }: PostLikesPanelProps) {
       <div className="space-y-3">
         {likes.map((like, index) => (
           <LikeUserItem
-            key={`${like.username}-${index}`}
+            key={`${like.userName}-${index}`}
             image={like.userProfilePic}
             name={like.userName}
-            username={like.username.replace('@', '')}
           />
         ))}
         {likes.length === 0 && (
