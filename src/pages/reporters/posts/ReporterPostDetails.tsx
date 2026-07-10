@@ -98,14 +98,14 @@ export function ReporterPostDetails() {
         // Use comments and likes from post details response (like NewsFeedPostDetails)
         setComments(
           (rawPost.comments || []).map((c: any) => ({
-            commentedUserUsername: c.author?.username || c.author?.name || 'Anonymous',
+            commentedUserUsername: c.author?.name || 'Anonymous',
             userProfilePic: c.author?.avatar || '',
             commentText: c.text || '',
             commentTime: getRelativeTime(new Date(c.createdAt)),
             commentLikeCount: String(c.likesCount || 0),
             replies: (c.replies || []).map((r: any) => ({
               image: r.author?.avatar || '',
-              username: r.author?.username || r.author?.name || 'Anonymous',
+              username: r.author?.name || 'Anonymous',
               text: r.text || '',
               time: getRelativeTime(new Date(r.createdAt)),
               likeCount: String(r.likesCount || 0),
@@ -117,7 +117,6 @@ export function ReporterPostDetails() {
           (rawPost.likes || []).map((l: any) => ({
             userProfilePic: l.user?.avatar || '',
             userName: l.user?.name || 'Unknown',
-            username: l.user?.username || `@${(l.user?.name || '').toLowerCase().replace(/\s+/g, '')}`,
           }))
         );
       } catch (err) {

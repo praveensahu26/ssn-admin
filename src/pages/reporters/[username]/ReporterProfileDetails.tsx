@@ -76,6 +76,7 @@ export const ReporterProfileDetails: React.FC = () => {
             following: rawAccount.following ?? [],
             isReported: rawAccount.isReported ?? false,
             reportCount: rawAccount.reportCount ?? 0,
+            isVerified: rawAccount.isVerified ?? false,
             status: rawAccount.status ? {
               value: rawAccount.status.value,
               reasonTitle: rawAccount.status.reasonTitle ?? undefined,
