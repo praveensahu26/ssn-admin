@@ -27,6 +27,7 @@ import {
   type AdminReporterUser,
 } from '@/services/adminReporterServices';
 import { getProfilePath } from '@/utils/profileRoutes';
+import { toast } from '@/lib/toast';
 
 const EyeIcon = () => <img src="/icons/table/eye.svg" alt="view" />;
 const DeleteIcon = () => <img src="/icons/table/delete.svg" alt="delete" />;
@@ -406,37 +407,29 @@ export const AccountsTemplate: React.FC<AccountsTemplateProps> = ({ role }) => {
   }) => {
     if (!moderationAction) return;
 
-    const selectedReason =
-      payload.description.trim() ||
-      payload.reasons[0] ||
-      'No reason provided.';
-
     const statusValue = moderationAction.type === 'block' ? 'blocked' : 'suspended';
 
-    // Handle bulk operations
-    if (moderationAction.accountIds.length > 1) {
-      await accountServices.bulkUpdateStatus(moderationAction.accountIds, statusValue);
+    try {
+      if (moderationAction.account === null || moderationAction.accountIds.length > 1) {
+        // Handle bulk operations
+        await accountServices.bulkUpdateStatus(moderationAction.accountIds, statusValue);
+        toast.success(`Selected accounts status updated to ${statusValue} successfully`);
+      } else if (moderationAction.account) {
+        // Handle single account operation
+        if (statusValue === 'blocked') {
+          await accountServices.blockAccount(moderationAction.account.id, payload);
+          toast.success('Account blocked successfully');
+        } else if (statusValue === 'suspended') {
+          await accountServices.suspendAccount(moderationAction.account.id, payload);
+          toast.success('Account suspended successfully');
+        }
+      }
       setRefreshKey(prev => prev + 1);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : `Failed to update account status to ${statusValue}`);
+    } finally {
       setModerationAction(null);
-      return;
     }
-
-    // Handle single account operation
-    if (moderationAction.account) {
-      setAccounts(prev =>
-        prev.map(item =>
-          item.id === moderationAction.account?.id
-            ? {
-                ...item,
-                isReported: false,
-                status: { value: statusValue, reasonTitle: selectedReason, reasonDescription: payload.description },
-              }
-            : item
-        )
-      );
-    }
-
-    setModerationAction(null);
   };
 
   const handleTabChange = (tab: AccountTab) => {
