@@ -58,7 +58,7 @@ export function ReporterCampaignDetails() {
         });
 
         setWordsOfSupport(
-          (supportRes.data?.results || []).map((donation: any) => ({
+          (supportRes.data?.supporters || []).map((donation: any) => ({
             userProfilePic: donation.donor?.avatar || '',
             userName: donation.donor?.name || 'Anonymous',
             donatedAmount: `$${donation.amount || 0}`,

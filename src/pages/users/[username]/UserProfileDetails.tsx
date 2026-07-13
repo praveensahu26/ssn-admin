@@ -90,7 +90,13 @@ export const UserProfileDetails: React.FC = () => {
               viewCount: post.viewCount || '0',
               categories: post.categories || [],
             })),
-            campaigns: campaignsRes.data?.campaigns ?? [],
+            campaigns: (campaignsRes.data?.campaigns ?? []).map((campaign: any) => ({
+              id: campaign.id,
+              mediaUrl: campaign.attachments?.[0]?.url || '',
+              attachments: campaign.attachments || [],
+              viewCount: campaign.viewCount || '0',
+              categories: campaign.categories || [],
+            })),
           };
 
           setProfile(assembledProfile);
