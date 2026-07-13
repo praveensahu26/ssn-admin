@@ -1,9 +1,16 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 
+export interface CampaignAttachment {
+  url: string;
+  type: 'image' | 'video';
+  key: string;
+}
+
 export interface ProfileCampaign {
   id: string;
   mediaUrl: string;
+  attachments?: CampaignAttachment[];
   viewCount: string;
   categories?: string | string[];
 }
@@ -85,13 +92,25 @@ export function ProfileCampaignsGrid({
       <div className="mt-5 grid gap-5 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
         {visibleCampaigns.map((campaign) => {
           const campaignCategories = getCampaignCategories(campaign);
+          const attachments = campaign.attachments || [];
+          const firstMedia = attachments[0];
+          const isVideo = firstMedia?.type === 'video';
+
           const card = (
             <article className="relative aspect-[1.4/0.8] cursor-pointer overflow-hidden rounded-lg bg-[#F1F5F9]">
-              <img
-                src={campaign.mediaUrl}
-                alt="Campaign media"
-                className="h-full w-full object-cover"
-              />
+              {isVideo ? (
+                <video
+                  src={firstMedia?.url || campaign.mediaUrl}
+                  muted
+                  className="h-full w-full object-cover"
+                />
+              ) : (
+                <img
+                  src={firstMedia?.url || campaign.mediaUrl}
+                  alt="Campaign media"
+                  className="h-full w-full object-cover"
+                />
+              )}
               <div className="absolute left-2 top-2 flex h-6 items-center gap-1 rounded-full bg-black/35 px-2 text-xs-custom font-medium leading-none text-white">
                 <img src="/icons/profile/view.svg" alt="views" className="h-4 w-4 brightness-0 invert" />
                 <span>{campaign.viewCount}</span>

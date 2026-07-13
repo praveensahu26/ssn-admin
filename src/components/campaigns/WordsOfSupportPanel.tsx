@@ -13,12 +13,10 @@ interface WordsOfSupportPanelProps {
 }
 
 export function WordsOfSupportPanel({ messages }: WordsOfSupportPanelProps) {
-  const repeatedMessages = messages.length ? Array.from({ length: 3 }, () => messages).flat() : [];
-
   return (
     <RightPanel title="Words of Support">
       <div className="space-y-2">
-        {repeatedMessages.map((message, index) => (
+        {messages.map((message, index) => (
           <SupportMessageItem
             key={`${message.userName}-${index}`}
             image={message.userProfilePic}

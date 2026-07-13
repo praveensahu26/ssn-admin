@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import CampaignProgressBar from './CampaignProgressBar';
 import CampaignStatusBadge from './CampaignStatusBadge';
 import SuspendCampaignDrawer from './SuspendCampaignDrawer';
+import { adminCampaignServices } from '@/services/adminCampaignServices';
 
 const iconPaths = {
   eye: '/icons/profile/view.svg',
@@ -80,7 +81,7 @@ function getMenuItems(status) {
     { label: 'Message Organizer', icon: iconPaths.message },
   ];
 
-  if (status === 'requested') {
+  if (status === 'requested' || status === 'pending') {
     return [
       baseItems[0],
       { label: 'Approve Campaign', icon: iconPaths.approve },
@@ -89,7 +90,12 @@ function getMenuItems(status) {
     ];
   }
 
-  return [...baseItems, { label: 'Suspend Campaign', icon: iconPaths.delete, action: 'suspend' }];
+  if (status === 'active') {
+    return [...baseItems, { label: 'Suspend Campaign', icon: iconPaths.delete, action: 'suspend' }];
+  }
+
+  // completed / suspended — no suspend option
+  return [...baseItems];
 }
 
 export function CampaignCard({ campaign, detailsHref }) {
@@ -98,12 +104,28 @@ export function CampaignCard({ campaign, detailsHref }) {
   const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isSuspendDrawerOpen, setIsSuspendDrawerOpen] = useState(false);
+  const [isSuspending, setIsSuspending] = useState(false);
+  const [currentStatus, setCurrentStatus] = useState(campaign.status?.toLowerCase() ?? 'active');
   const [profileError, setProfileError] = useState(false);
   const menuRef = useRef(null);
   const titlePreview = getTitlePreview(campaign.title);
-  const status = campaign.status?.toLowerCase() ?? 'active';
+  const status = currentStatus;
   const category = campaign.categories?.[0] ?? 'Campaign';
   const menuItems = getMenuItems(status);
+
+  async function handleSuspend(payload) {
+    if (!campaign.id) return;
+    setIsSuspending(true);
+    try {
+      await adminCampaignServices.suspendCampaign(campaign.id, payload);
+      setCurrentStatus('suspended');
+      setIsSuspendDrawerOpen(false);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Failed to suspend campaign');
+    } finally {
+      setIsSuspending(false);
+    }
+  }
   const openCampaignDetails = () => {
     if (detailsHref) {
       navigate(detailsHref);
@@ -269,6 +291,8 @@ export function CampaignCard({ campaign, detailsHref }) {
         <SuspendCampaignDrawer
           isOpen={isSuspendDrawerOpen}
           onClose={() => setIsSuspendDrawerOpen(false)}
+          onSubmit={handleSuspend}
+          isSubmitting={isSuspending}
         />
       </div>
     </article>

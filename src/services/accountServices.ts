@@ -156,7 +156,7 @@ export const accountServices = {
     ),
 
   getCampaignSupport: (campaignId: string, params: { page?: number; limit?: number } = {}) =>
-    unwrap<{ results: any[]; meta: AccountListMeta }>(
+    unwrap<{ supporters: any[]; meta?: AccountListMeta }>(
       apiClient.get(`/campaigns/${campaignId}/support`, { params })
     ),
 };
