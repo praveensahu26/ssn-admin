@@ -46,7 +46,7 @@ interface CampaignInfoProps {
   };
   // ── Action callbacks (all optional — absent on non-admin pages) ─────────────
   onApprove?: () => void;
-  onReject?: (rejectionReason: string) => void;
+  onReject?: () => void;
   onSuspend?: (payload: { suspensionReasons: SuspensionReason[]; suspensionNote?: string }) => void;
   onComplete?: () => void;
   isApproving?: boolean;
@@ -99,6 +99,17 @@ function getCampaignActions(
         onClick: callbacks.onRejectOpen,
       },
       messageAction,
+      suspendAction,
+    ];
+  }
+
+  if (normalizedStatus === 'rejected') {
+    return [
+      {
+        label: 'Approve Campaign',
+        icon: campaignActionIcons.approve,
+        onClick: callbacks.onApprove,
+      },
     ];
   }
 
@@ -118,6 +129,11 @@ function getCampaignActions(
     ];
   }
 
+  if (normalizedStatus === 'completed') {
+    return [messageAction];
+  }
+
+  // suspended — only message action
   return [messageAction];
 }
 
@@ -134,8 +150,6 @@ export function CampaignInfo({
   isCompleting = false,
 }: CampaignInfoProps) {
   const [isSuspendDrawerOpen, setIsSuspendDrawerOpen] = useState(false);
-  const [isRejectDialogOpen, setIsRejectDialogOpen] = useState(false);
-  const [rejectionReason, setRejectionReason] = useState('');
 
   const location = useLocation();
   const mainCategory = getMainCategory(campaign.categories);
@@ -146,17 +160,10 @@ export function CampaignInfo({
 
   const actions = getCampaignActions(campaignStatus, {
     onSuspendOpen: () => setIsSuspendDrawerOpen(true),
-    onRejectOpen: () => setIsRejectDialogOpen(true),
+    onRejectOpen: () => onReject?.(),
     onApprove,
     onComplete,
   });
-
-  function handleRejectConfirm() {
-    if (!rejectionReason.trim()) return;
-    onReject?.(rejectionReason.trim());
-    setIsRejectDialogOpen(false);
-    setRejectionReason('');
-  }
 
   return (
     <div>
@@ -220,45 +227,6 @@ export function CampaignInfo({
         onSubmit={onSuspend}
         isSubmitting={isSuspending}
       />
-
-      {/* Inline reject dialog */}
-      {isRejectDialogOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
-          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
-            <h2 className="text-md-custom font-semibold text-text-primary">Reject Campaign</h2>
-            <p className="mt-1 text-sm-custom text-text-secondary">
-              Please provide a reason for rejecting this campaign. The organizer will be notified.
-            </p>
-            <textarea
-              rows={4}
-              value={rejectionReason}
-              onChange={(e) => setRejectionReason(e.target.value)}
-              placeholder="Enter rejection reason…"
-              className="mt-4 w-full rounded-lg border border-[#DCE5EF] p-3 text-sm-custom text-text-primary placeholder-text-secondary outline-none focus:border-btn-primary"
-            />
-            <div className="mt-4 flex gap-3">
-              <button
-                type="button"
-                disabled={!rejectionReason.trim() || isRejecting}
-                onClick={handleRejectConfirm}
-                className="flex h-11 flex-1 items-center justify-center rounded-lg bg-red-600 text-sm-custom font-medium text-white disabled:opacity-50"
-              >
-                {isRejecting ? 'Rejecting…' : 'Confirm Reject'}
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setIsRejectDialogOpen(false);
-                  setRejectionReason('');
-                }}
-                className="flex h-11 flex-1 items-center justify-center rounded-lg bg-[#D6EAFF] text-sm-custom font-medium text-text-primary"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

@@ -4,9 +4,11 @@ const tabs = [
   { id: 'completed', label: 'Completed' },
   { id: 'requested', label: 'Campaign Requests' },
   { id: 'suspended', label: 'Suspended' },
+  { id: 'rejected', label: 'Rejected' },
 ];
 
 export function CampaignTabs({ activeTab, onTabChange }) {
+  // eslint-disable-next-line react/prop-types
   return (
     <div className="flex flex-wrap items-center gap-3">
       {tabs.map((tab) => {

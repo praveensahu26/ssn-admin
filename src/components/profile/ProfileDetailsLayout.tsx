@@ -31,6 +31,7 @@ export interface ProfileDetailsAccount {
   isReported?: boolean;
   reportCount?: number;
   isVerified?: boolean;
+  hasWarning?: boolean;
   status?: {
     value: string;
     reasonTitle?: string;
@@ -279,8 +280,14 @@ export function ProfileDetailsLayout({ profile, detailsBasePath, onBack, onModer
                     <div className="flex flex-col gap-5">
                       {profileActionItems
                         .filter((item) => {
-                          if (item.id === 'suspend' && isSuspended) return false;
+                          // Hide Issue Warning if already warned
+                          if (item.id === 'warning' && profile.hasWarning) return false;
+                          // Hide Issue Warning if blocked or suspended
+                          if (item.id === 'warning' && (isBlocked || isSuspended)) return false;
+                          // Hide Block if already blocked
                           if (item.id === 'block' && isBlocked) return false;
+                          // Hide Suspend if already suspended
+                          if (item.id === 'suspend' && isSuspended) return false;
                           return true;
                         })
                         .map((item) => (

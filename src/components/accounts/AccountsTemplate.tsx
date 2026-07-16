@@ -625,12 +625,12 @@ export const AccountsTemplate: React.FC<AccountsTemplateProps> = ({ role }) => {
       tooltip: 'More Options',
       menuItems: [
         {
-          label: 'Block User',
+          label: isReporter ? 'Block Reporter' : 'Block User',
           icon: <MenuIcon src="/icons/table/remove.svg" alt="block" />,
           onClick: row => handleModerationAction('block', row),
         },
         {
-          label: 'Suspend User',
+          label: isReporter ? 'Suspend Reporter' : 'Suspend User',
           icon: <MenuIcon src="/icons/table/warning.svg" alt="suspend" />,
           onClick: row => handleModerationAction('suspend', row),
         },
@@ -663,7 +663,7 @@ export const AccountsTemplate: React.FC<AccountsTemplateProps> = ({ role }) => {
           onClick: row => handleModerationAction('warning', row),
         },
         {
-          label: 'Block User',
+          label: isReporter ? 'Block Reporter' : 'Block User',
           icon: <MenuIcon src="/icons/table/remove.svg" alt="block" />,
           onClick: row => handleModerationAction('block', row),
         },

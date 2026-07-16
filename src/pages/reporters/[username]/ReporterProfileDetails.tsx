@@ -78,6 +78,7 @@ export const ReporterProfileDetails: React.FC = () => {
             isReported: rawAccount.isReported ?? false,
             reportCount: rawAccount.reportCount ?? 0,
             isVerified: rawAccount.isVerified ?? false,
+            hasWarning: rawAccount.hasWarning ?? false,
             status: rawAccount.status ? {
               value: rawAccount.status.value,
               reasonTitle: rawAccount.status.reasonTitle ?? undefined,
@@ -162,6 +163,7 @@ export const ReporterProfileDetails: React.FC = () => {
                       reasonDescription: rawAccount.status.reasonDescription ?? undefined,
                     }
                   : prev.status,
+                hasWarning: rawAccount.hasWarning ?? false,
               }
             : null
         );

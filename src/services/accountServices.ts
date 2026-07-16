@@ -56,6 +56,7 @@ export interface AdminAccount {
   gender?: string | null;
   journalistId?: string | null;
   verificationRequest?: string | null;
+  hasWarning?: boolean;
   createdAt: string;
   updatedAt: string;
   followersCount?: number;
