@@ -3,6 +3,7 @@ export const campaignStatusColors = {
   completed: '#0B8500',
   suspended: '#AF0900',
   requested: '#6A7A8C',
+  rejected: '#AF0900',
 };
 
 const statusLabels = {
@@ -10,6 +11,7 @@ const statusLabels = {
   completed: 'Completed',
   suspended: 'Suspended',
   requested: 'Requested',
+  rejected: 'Rejected',
 };
 
 export function CampaignStatusBadge({ status }) {

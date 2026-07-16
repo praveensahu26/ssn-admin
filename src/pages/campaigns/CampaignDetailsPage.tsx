@@ -111,11 +111,11 @@ export function CampaignDetailsPage() {
     }
   }, [id]);
 
-  const handleReject = useCallback(async (rejectionReason: string) => {
+  const handleReject = useCallback(async () => {
     if (!id) return;
     setIsRejecting(true);
     try {
-      const res = await adminCampaignServices.rejectCampaign(id, rejectionReason);
+      const res = await adminCampaignServices.rejectCampaign(id);
       const updated = res.data?.campaign;
       if (updated) setCampaign(mapCampaign(updated));
     } catch (err) {

@@ -11,6 +11,7 @@ const iconPaths = {
   message: '/icons/profile/message.svg',
   delete: '/icons/profile/delete.svg',
   approve: '/icons/profile/approve.svg',
+  reject: '/icons/profile/delete.svg',
 };
 
 function getInitials(name) {
@@ -84,17 +85,33 @@ function getMenuItems(status) {
   if (status === 'requested' || status === 'pending') {
     return [
       baseItems[0],
-      { label: 'Approve Campaign', icon: iconPaths.approve },
+      { label: 'Approve Campaign', icon: iconPaths.approve, action: 'approve' },
+      { label: 'Reject Campaign', icon: iconPaths.reject, action: 'reject' },
       baseItems[1],
       { label: 'Suspend Campaign', icon: iconPaths.delete, action: 'suspend' },
     ];
   }
 
-  if (status === 'active') {
-    return [...baseItems, { label: 'Suspend Campaign', icon: iconPaths.delete, action: 'suspend' }];
+  if (status === 'rejected') {
+    return [
+      baseItems[0],
+      { label: 'Approve Campaign', icon: iconPaths.approve, action: 'approve' },
+    ];
   }
 
-  // completed / suspended — no suspend option
+  if (status === 'active') {
+    return [
+      ...baseItems,
+      { label: 'Suspend Campaign', icon: iconPaths.delete, action: 'suspend' },
+      { label: 'Mark as Completed', icon: iconPaths.approve, action: 'complete' },
+    ];
+  }
+
+  if (status === 'completed') {
+    return [...baseItems];
+  }
+
+  // suspended — no actions beyond base
   return [...baseItems];
 }
 
@@ -105,6 +122,9 @@ export function CampaignCard({ campaign, detailsHref }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isSuspendDrawerOpen, setIsSuspendDrawerOpen] = useState(false);
   const [isSuspending, setIsSuspending] = useState(false);
+  const [isApproving, setIsApproving] = useState(false);
+  const [isRejecting, setIsRejecting] = useState(false);
+  const [isCompleting, setIsCompleting] = useState(false);
   const [currentStatus, setCurrentStatus] = useState(campaign.status?.toLowerCase() ?? 'active');
   const [profileError, setProfileError] = useState(false);
   const menuRef = useRef(null);
@@ -124,6 +144,45 @@ export function CampaignCard({ campaign, detailsHref }) {
       alert(err instanceof Error ? err.message : 'Failed to suspend campaign');
     } finally {
       setIsSuspending(false);
+    }
+  }
+
+  async function handleApprove() {
+    if (!campaign.id) return;
+    setIsApproving(true);
+    try {
+      await adminCampaignServices.approveCampaign(campaign.id);
+      setCurrentStatus('active');
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Failed to approve campaign');
+    } finally {
+      setIsApproving(false);
+    }
+  }
+
+  async function handleReject() {
+    if (!campaign.id) return;
+    setIsRejecting(true);
+    try {
+      await adminCampaignServices.rejectCampaign(campaign.id);
+      setCurrentStatus('rejected');
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Failed to reject campaign');
+    } finally {
+      setIsRejecting(false);
+    }
+  }
+
+  async function handleComplete() {
+    if (!campaign.id) return;
+    setIsCompleting(true);
+    try {
+      await adminCampaignServices.completeCampaign(campaign.id);
+      setCurrentStatus('completed');
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Failed to complete campaign');
+    } finally {
+      setIsCompleting(false);
     }
   }
   const openCampaignDetails = () => {
@@ -245,11 +304,23 @@ export function CampaignCard({ campaign, detailsHref }) {
                         openCampaignDetails();
                       } else if (item.action === 'suspend') {
                         setIsSuspendDrawerOpen(true);
+                      } else if (item.action === 'approve') {
+                        handleApprove();
+                      } else if (item.action === 'reject') {
+                        handleReject();
+                      } else if (item.action === 'complete') {
+                        handleComplete();
                       }
                     }}
+                    disabled={isApproving || isRejecting || isCompleting}
                   >
                     <img src={item.icon} alt="" className="h-6 w-6 object-contain" />
-                    <span>{item.label}</span>
+                    <span>
+                      {isApproving && item.action === 'approve' ? 'Approving...' : 
+                       isRejecting && item.action === 'reject' ? 'Rejecting...' : 
+                       isCompleting && item.action === 'complete' ? 'Completing...' : 
+                       item.label}
+                    </span>
                   </button>
                 ))}
               </div>

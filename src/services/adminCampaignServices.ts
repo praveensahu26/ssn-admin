@@ -40,7 +40,6 @@ export interface AdminCampaign {
   updatedAt?: string;
   approvedAt?: string | null;
   completedAt?: string | null;
-  rejectionReason?: string | null;
   suspensionReasons?: string[];
   suspensionNote?: string | null;
 }
@@ -68,7 +67,7 @@ export interface CampaignListMeta {
   totalPages: number;
 }
 
-export type CampaignTab = 'overview' | 'active' | 'completed' | 'requests' | 'suspended';
+export type CampaignTab = 'overview' | 'active' | 'completed' | 'requests' | 'suspended' | 'rejected';
 
 export interface ListCampaignsParams {
   tab?: CampaignTab;
@@ -131,11 +130,11 @@ export const adminCampaignServices = {
 
   /**
    * POST /v1/admin/campaigns/:id/reject
-   * Reject a pending campaign. Requires a rejectionReason.
+   * Reject a pending campaign.
    */
-  rejectCampaign: (id: string, rejectionReason: string) =>
+  rejectCampaign: (id: string) =>
     unwrap<{ campaign: AdminCampaign }>(
-      apiClient.post(`/admin/campaigns/${id}/reject`, { rejectionReason })
+      apiClient.post(`/admin/campaigns/${id}/reject`, {})
     ),
 
   /**

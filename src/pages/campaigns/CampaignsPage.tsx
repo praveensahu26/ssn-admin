@@ -52,8 +52,8 @@ function mapApiCampaignToCard(campaign: AdminCampaign) {
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
-type UiCampaignTab = 'overview' | 'active' | 'completed' | 'requested' | 'suspended';
-const uiCampaignTabs: UiCampaignTab[] = ['overview', 'active', 'completed', 'requested', 'suspended'];
+type UiCampaignTab = 'overview' | 'active' | 'completed' | 'requested' | 'suspended' | 'rejected';
+const uiCampaignTabs: UiCampaignTab[] = ['overview', 'active', 'completed', 'requested', 'suspended', 'rejected'];
 
 function isUiCampaignTab(value: string | null): value is UiCampaignTab {
   return Boolean(value && uiCampaignTabs.includes(value as UiCampaignTab));
@@ -215,7 +215,7 @@ export function CampaignsPage() {
   return (
     <MainLayout>
       <div className="flex flex-col gap-6">
-        <CampaignTabs activeTab={activeTab} onTabChange={handleTabChange} />
+        <CampaignTabs activeTab={activeTab as any} onTabChange={handleTabChange as any} />
 
         {activeTab === 'overview' && (
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
