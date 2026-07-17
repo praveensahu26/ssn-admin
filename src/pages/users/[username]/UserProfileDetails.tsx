@@ -83,6 +83,7 @@ export const UserProfileDetails: React.FC = () => {
               reasonTitle: rawAccount.status.reasonTitle ?? undefined,
               reasonDescription: rawAccount.status.reasonDescription ?? undefined,
             } : undefined,
+            connectyCubeUserId: rawAccount.connectyCubeUserId,
             posts: (postsRes.data?.posts ?? []).map((post: any) => ({
               id: post.id,
               mediaUrl: post.media?.[0]?.url || '',

@@ -18,6 +18,7 @@ const NewsFeedPostDetailsPage = lazy(() => import('@/pages/news-feed/NewsFeedPos
 const CampaignsPage = lazy(() => import('@/pages/campaigns/CampaignsPage'));
 const CampaignDetailsPage = lazy(() => import('@/pages/campaigns/CampaignDetailsPage'));
 const SettingsPage = lazy(() => import('@/pages/settings/SettingsPage'));
+const ChatPage = lazy(() => import('@/pages/chat/ChatPage'));
 const LoginPage = lazy(() => import('@/pages/login/LoginPage'));
 const ForgotPasswordPage = lazy(() => import('@/pages/forgot-password/ForgotPasswordPage'));
 const VerifyEmailPage = lazy(() => import('@/pages/verify-email/VerifyEmailPage'));
@@ -56,6 +57,7 @@ const AppRouter = () => {
             <Route path={`${ROUTES.newsFeed}/:postId`} element={<NewsFeedPostDetailsPage />} />
             <Route path={ROUTES.campaigns} element={<CampaignsPage />} />
             <Route path={`${ROUTES.campaigns}/:id`} element={<CampaignDetailsPage />} />
+            <Route path={ROUTES.chat} element={<ChatPage />} />
             <Route path={ROUTES.settings} element={<SettingsPage />} />
           </Route>
 

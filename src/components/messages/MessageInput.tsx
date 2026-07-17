@@ -12,6 +12,7 @@ interface AttachmentAction {
 interface MessageInputProps {
   value: string;
   isRecording: boolean;
+  isPaused: boolean;
   isAttachmentOpen: boolean;
   recordingDuration: string;
   attachmentActions: AttachmentAction[];
@@ -20,14 +21,17 @@ interface MessageInputProps {
   onStartRecording: () => void;
   onCancelRecording: () => void;
   onSendRecording: () => void;
+  onPauseToggle: () => void;
   onToggleAttachment: () => void;
   onCloseAttachment: () => void;
   onAttachmentSelect: (action: AttachmentAction) => void;
+  onToggleEmojiPicker?: () => void;
 }
 
 export default function MessageInput({
   value,
   isRecording,
+  isPaused,
   isAttachmentOpen,
   recordingDuration,
   attachmentActions,
@@ -36,9 +40,11 @@ export default function MessageInput({
   onStartRecording,
   onCancelRecording,
   onSendRecording,
+  onPauseToggle,
   onToggleAttachment,
   onCloseAttachment,
   onAttachmentSelect,
+  onToggleEmojiPicker,
 }: MessageInputProps) {
   const footerRef = useRef<HTMLDivElement>(null);
 
@@ -64,7 +70,13 @@ export default function MessageInput({
 
       <div className="px-4 py-3">
         {isRecording ? (
-          <VoiceRecorder duration={recordingDuration} onCancel={onCancelRecording} onSend={onSendRecording} />
+          <VoiceRecorder 
+            duration={recordingDuration} 
+            isPaused={isPaused}
+            onCancel={onCancelRecording} 
+            onSend={onSendRecording}
+            onPauseToggle={onPauseToggle}
+          />
         ) : (
           <div className="flex items-end gap-2">
             <button
@@ -81,7 +93,14 @@ export default function MessageInput({
             </button>
 
             <div className="flex min-h-10 flex-1 items-end gap-2 rounded-lg border border-[#DCE5EF] bg-[#F6FBFF] px-3 py-2">
-              <Smile className="mt-1 h-5 w-5 shrink-0 text-text-secondary" />
+              <button 
+                type="button" 
+                aria-label="Toggle emoji picker" 
+                className="text-text-secondary transition-colors hover:text-btn-primary"
+                onClick={onToggleEmojiPicker}
+              >
+                <Smile className="mt-1 h-5 w-5 shrink-0" />
+              </button>
               <textarea
                 value={value}
                 rows={1}

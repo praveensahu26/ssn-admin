@@ -38,6 +38,7 @@ export interface ProfileDetailsAccount {
   };
   posts?: ProfilePost[];
   campaigns?: ProfileCampaign[];
+  connectyCubeUserId?: number;
 }
 
 interface ProfileDetailsLayoutProps {

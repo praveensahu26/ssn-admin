@@ -8,6 +8,8 @@ import { ROUTES } from '@/config/routes';
 import { useAuthData } from '@/hooks/useAuthData';
 import { toast } from '@/lib/toast';
 import { authServices } from '@/services/authServices';
+import { loginToConnectyCube } from '@/services/connectyCubeAuth';
+import { initializeConnectyCube } from '@/lib/connectyCube';
 
 const LoginSchema = Yup.object().shape({
   email: Yup.string().email('Invalid email address').required('Email is required'),
@@ -43,6 +45,19 @@ const LoginPage: React.FC = () => {
           response.data.tokens.refresh.token,
           values.keepLoggedIn
         );
+        
+        // Initialize ConnectyCube and login
+        try {
+          initializeConnectyCube();
+          await loginToConnectyCube(values.email, values.password);
+          console.log('ConnectyCube login successful');
+        } catch (connectyCubeError) {
+          console.error('ConnectyCube login failed:', connectyCubeError);
+          // Show error toast and don't proceed if ConnectyCube login fails
+          toast.error('Failed to connect to chat service. Please check your credentials.');
+          return;
+        }
+        
         toast.success(response.message || 'Super admin logged in successfully');
         navigate(ROUTES.dashboard, { replace: true });
       } catch (error) {
