@@ -2,13 +2,12 @@ import { ArrowLeft, X } from 'lucide-react';
 
 interface MessageHeaderProps {
   name: string;
-  username: string;
   avatar: string;
   isOnline: boolean;
   onClose: () => void;
 }
 
-export default function MessageHeader({ name, username, avatar, isOnline, onClose }: MessageHeaderProps) {
+export default function MessageHeader({ name, avatar, isOnline, onClose }: MessageHeaderProps) {
   return (
     <header className="flex h-[67px] shrink-0 items-center justify-between border-b border-[#DCE5EF] bg-white px-4">
       <div className="flex min-w-0 items-center gap-3">
@@ -32,7 +31,7 @@ export default function MessageHeader({ name, username, avatar, isOnline, onClos
               />
             </div>
             <p className="truncate text-xs-custom font-medium leading-4 text-text-secondary">
-              {name} · {username} · {isOnline ? 'Online' : 'Offline'}
+              {name} · {isOnline ? 'Online' : 'Offline'}
             </p>
           </div>
         </div>

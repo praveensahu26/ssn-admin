@@ -10,6 +10,7 @@ export const ROUTES = {
   newsFeed: '/news-feed',
   adminNews: '/admin-news',
   campaigns: '/campaigns',
+  chat: '/chat',
   settings: '/settings',
   notFound: '*',
 } as const;

@@ -1,4 +1,4 @@
-import { CheckCheck } from 'lucide-react';
+import { CheckCheck, FileText, Download, Mic } from 'lucide-react';
 
 export interface MessageItem {
   id: string;
@@ -38,14 +38,55 @@ export default function MessageBubble({ message, currentUserId, showAvatar, avat
         }`}
       >
         {message.type === 'image' && message.mediaUrl ? (
-          <img
-            src={message.mediaUrl}
-            alt={message.body}
-            className="-mx-3 -my-2 max-h-[44vh] w-[320px] max-w-full rounded-md object-cover sm:w-[365px]"
-          />
+          <>
+            <img
+              src={message.mediaUrl}
+              alt={message.body}
+              className="-mx-3 -my-2 max-h-[44vh] w-[320px] max-w-full rounded-md object-cover sm:w-[365px]"
+              onError={(e) => console.error('Image load error:', e)}
+            />
+            <p className="text-xs text-text-secondary mt-2">{message.body}</p>
+          </>
+        ) : message.type === 'voice' && message.mediaUrl ? (
+          <div className="flex items-center gap-3 rounded-md border border-[#D7E8FF] bg-[#F8FBFF] p-3">
+            <Mic className="h-8 w-8 text-btn-primary shrink-0" />
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-text-primary truncate">{message.body}</p>
+              <audio 
+                controls 
+                src={message.mediaUrl}
+                className="w-full mt-1 h-8"
+              />
+            </div>
+          </div>
+        ) : message.type === 'file' && message.mediaUrl ? (
+          <a
+            href={message.mediaUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-3 rounded-md border border-[#D7E8FF] bg-[#F8FBFF] p-3 hover:bg-[#F0F5FF] transition-colors"
+          >
+            <FileText className="h-8 w-8 text-btn-primary shrink-0" />
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-text-primary truncate">{message.body}</p>
+              <p className="text-xs text-text-secondary">Click to view or download</p>
+            </div>
+            <Download className="h-5 w-5 text-text-secondary shrink-0" />
+          </a>
         ) : (
-          <p className={`text-[13px] font-medium leading-5 ${message.type === 'link' ? 'break-all text-btn-primary' : ''}`}>
-            {message.body}
+          <p className={`text-[13px] font-medium leading-5`}>
+            {message.type === 'link' ? (
+              <a 
+                href={message.body.match(/https?:\/\/[^\s]+/)?.[0]} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="break-all text-btn-primary hover:underline"
+              >
+                {message.body}
+              </a>
+            ) : (
+              message.body
+            )}
           </p>
         )}
 

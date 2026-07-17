@@ -65,6 +65,7 @@ export interface AdminAccount {
   following?: any[];
   postsCount?: number;
   campaignsCount?: number;
+  connectyCubeUserId?: number;
 }
 
 export interface AccountListMeta {

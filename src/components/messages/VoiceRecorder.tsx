@@ -1,14 +1,16 @@
-import { Mic, Pause, Send, X } from 'lucide-react';
+import { Mic, Pause, Play, Send, X } from 'lucide-react';
 
 interface VoiceRecorderProps {
   duration: string;
+  isPaused: boolean;
   onCancel: () => void;
   onSend: () => void;
+  onPauseToggle: () => void;
 }
 
 const bars = [12, 18, 10, 26, 18, 32, 16, 22, 14, 28, 20, 34, 16, 24, 12, 30, 18, 26, 14, 20, 12];
 
-export default function VoiceRecorder({ duration, onCancel, onSend }: VoiceRecorderProps) {
+export default function VoiceRecorder({ duration, isPaused, onCancel, onSend, onPauseToggle }: VoiceRecorderProps) {
   return (
     <div className="flex w-full items-center gap-2 transition-all duration-300">
       <button
@@ -21,14 +23,19 @@ export default function VoiceRecorder({ duration, onCancel, onSend }: VoiceRecor
       </button>
 
       <div className="flex h-10 min-w-0 flex-1 items-center gap-3 rounded-lg bg-btn-primary px-3 text-white">
-        <button type="button" aria-label="Pause recording" className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white/15">
-          <Pause className="h-4 w-4 fill-white" />
+        <button 
+          type="button" 
+          aria-label={isPaused ? "Resume recording" : "Pause recording"} 
+          className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white/15 hover:bg-white/25 transition-colors"
+          onClick={onPauseToggle}
+        >
+          {isPaused ? <Play className="h-4 w-4 fill-white" /> : <Pause className="h-4 w-4 fill-white" />}
         </button>
         <div className="flex min-w-0 flex-1 items-center justify-center gap-0.5">
           {bars.map((height, index) => (
             <span
               key={`${height}-${index}`}
-              className="w-1 rounded-full bg-white/90 motion-safe:animate-pulse"
+              className={`w-1 rounded-full bg-white/90 ${isPaused ? '' : 'motion-safe:animate-pulse'}`}
               style={{ height: `${height}px`, animationDelay: `${index * 60}ms` }}
             />
           ))}
