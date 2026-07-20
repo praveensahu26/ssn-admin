@@ -392,7 +392,10 @@ export function ProfileDetailsLayout({ profile, detailsBasePath, onBack, onModer
 
       <MessageDrawer
         isOpen={isMessageDrawerOpen}
-        profile={profile}
+        profile={{
+          ...profile,
+          email: profile.email,
+        }}
         onClose={() => setIsMessageDrawerOpen(false)}
       />
       <ConnectionsDrawer

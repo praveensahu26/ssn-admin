@@ -40,7 +40,6 @@ export function NewsFeedPage() {
           ...dbCategories.map((c: any) => ({ id: c._id || c.id, name: c.name })),
         ]);
       } catch (err) {
-        console.error('Failed to load categories', err);
       }
     }
     fetchCategories();
@@ -118,7 +117,6 @@ export function NewsFeedPage() {
       await adminNewsServices.deleteNews(id);
       setPosts((prev) => prev.filter((p) => (p.id || p._id) !== id));
     } catch (err) {
-      console.error('Failed to delete post', err);
     }
   }
 

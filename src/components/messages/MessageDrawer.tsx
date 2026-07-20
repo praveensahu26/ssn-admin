@@ -4,13 +4,14 @@ import MessageHeader from '@/components/messages/MessageHeader';
 import MessageInput from '@/components/messages/MessageInput';
 import type { MessageItem } from '@/components/messages/MessageBubble';
 import { attachmentActions } from '@/components/messages/dummyData';
-import { getMessages, sendMessage, uploadFile, onMessageReceived, onTypingStatus, onOnlineStatus, setupMessageListeners, removeMessageListeners, sendTypingStatus, markAsRead, getDialog, createDialog, type ChatMessage, type Dialog } from '@/services/connectyCubeChat';
+import { getMessages, sendMessage, uploadFile, onMessageReceived, onTypingStatus, onOnlineStatus, setupMessageListeners, removeMessageListeners, sendTypingStatus, markAsRead, getDialog, createDialog, resolveUserIdByEmail, type ChatMessage, type Dialog } from '@/services/connectyCubeChat';
 import { getCurrentUser, getCurrentUserId, isAuthenticated, ensureAuthenticated } from '@/services/connectyCubeAuth';
 import { initializeConnectyCube, getConnectyCube } from '@/lib/connectyCube';
 
 interface MessageDrawerProfile {
   name: string;
   username: string;
+  email?: string;
   profilePicture?: string;
   connectyCubeUserId?: number;
 }
@@ -38,6 +39,8 @@ export default function MessageDrawer({ isOpen, profile, onClose, dialog }: Mess
   const [isEmojiPickerOpen, setIsEmojiPickerOpen] = useState(false);
   const [currentDialog, setCurrentDialog] = useState<Dialog | undefined>(dialog);
   const [creatingDialog, setCreatingDialog] = useState(false);
+  const [resolvingUser, setResolvingUser] = useState(false);
+  const [resolutionError, setResolutionError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
@@ -65,8 +68,8 @@ export default function MessageDrawer({ isOpen, profile, onClose, dialog }: Mess
       initializeConnectyCube();
       loadCurrentUser();
       
-      // If no dialog provided, try to create one
-      if (!dialog && profile.connectyCubeUserId) {
+      // If no dialog provided, try to create one (ConnectyCube-first approach)
+      if (!dialog && profile.email) {
         handleDialogCreation();
       } else if (dialog) {
         setCurrentDialog(dialog);
@@ -94,12 +97,10 @@ export default function MessageDrawer({ isOpen, profile, onClose, dialog }: Mess
                 const CB = getConnectyCube();
                 mediaUrl = CB.storage.privateUrl(attachment.uid);
               } catch (error) {
-                console.error('Failed to resolve private URL, trying public URL:', error);
                 try {
                   const CB = getConnectyCube();
                   mediaUrl = CB.storage.publicUrl(attachment.uid);
                 } catch (publicError) {
-                  console.error('Failed to resolve public URL:', publicError);
                   mediaUrl = attachment.uid; // Fallback to UID
                 }
               }
@@ -203,7 +204,6 @@ export default function MessageDrawer({ isOpen, profile, onClose, dialog }: Mess
         return 14922637;
       }
     } catch (error) {
-      console.error('Failed to load current user:', error);
       // Final fallback: use the admin user ID directly
       setCurrentUserId(14922637);
       return 14922637;
@@ -211,8 +211,33 @@ export default function MessageDrawer({ isOpen, profile, onClose, dialog }: Mess
   }
 
   async function handleDialogCreation() {
-    if (!profile.connectyCubeUserId) {
-      console.error('Cannot create dialog: no ConnectyCube user ID');
+    let userId: number | null = null;
+    
+    // Always try to resolve by email first (ConnectyCube-first approach)
+    if (profile.email) {
+      try {
+        setResolvingUser(true);
+        setResolutionError(null);
+        
+        userId = await resolveUserIdByEmail(profile.email);
+        
+        if (!userId) {
+          setResolutionError('User not found in ConnectyCube. Please ensure the user exists in ConnectyCube.');
+          return;
+        }
+      } catch (error) {
+        setResolutionError('Failed to resolve user in ConnectyCube. Please check your connection and try again.');
+        return;
+      } finally {
+        setResolvingUser(false);
+      }
+    } else {
+      setResolutionError('Cannot start conversation - user email is required');
+      return;
+    }
+    
+    if (!userId) {
+      setResolutionError('Cannot start conversation - unable to find user in ConnectyCube');
       return;
     }
 
@@ -225,20 +250,21 @@ export default function MessageDrawer({ isOpen, profile, onClose, dialog }: Mess
       }
       
       // Try to get existing dialog first
-      let existingDialog = await getDialog(profile.connectyCubeUserId);
+      let existingDialog = await getDialog(userId);
       
       if (!existingDialog) {
-        existingDialog = await createDialog(profile.connectyCubeUserId);
+        existingDialog = await createDialog(userId);
       }
       
       setCurrentDialog(existingDialog);
       await loadMessages(existingDialog.id);
     } catch (error) {
-      console.error('Failed to create dialog:', error);
+      setResolutionError('Failed to create conversation. Please try again.');
     } finally {
       setCreatingDialog(false);
     }
   }
+
 
   async function loadMessages(dialogId: string) {
     try {
@@ -263,12 +289,10 @@ export default function MessageDrawer({ isOpen, profile, onClose, dialog }: Mess
               const CB = getConnectyCube();
               mediaUrl = CB.storage.privateUrl(attachment.uid);
             } catch (error) {
-              console.error('Failed to resolve private URL, trying public URL:', error);
               try {
                 const CB = getConnectyCube();
                 mediaUrl = CB.storage.publicUrl(attachment.uid);
               } catch (publicError) {
-                console.error('Failed to resolve public URL:', publicError);
                 mediaUrl = attachment.uid; // Fallback to UID
               }
             }
@@ -293,7 +317,6 @@ export default function MessageDrawer({ isOpen, profile, onClose, dialog }: Mess
       
       setMessages(messageItems);
     } catch (error) {
-      console.error('Failed to load messages:', error);
     } finally {
       setLoading(false);
     }
@@ -353,7 +376,6 @@ export default function MessageDrawer({ isOpen, profile, onClose, dialog }: Mess
   async function handleSend() {
     const trimmedValue = inputValue.trim();
     if (!trimmedValue || !currentDialog) {
-      console.error('Cannot send message: no content or no dialog', { trimmedValue, currentDialog });
       return;
     }
 
@@ -383,8 +405,7 @@ export default function MessageDrawer({ isOpen, profile, onClose, dialog }: Mess
       setInputValue('');
       setIsAttachmentOpen(false);
     } catch (error) {
-      console.error('Failed to send message:', error);
-      alert('Failed to send message. Please check console for details.');
+      alert('Failed to send message. Please try again.');
     }
   }
 
@@ -440,7 +461,6 @@ export default function MessageDrawer({ isOpen, profile, onClose, dialog }: Mess
       // Start timer that counts up
       startTimer();
     } catch (error) {
-      console.error('Failed to start recording:', error);
       alert('Failed to access microphone. Please allow microphone access.');
       setIsRecording(false);
     }
@@ -498,7 +518,6 @@ export default function MessageDrawer({ isOpen, profile, onClose, dialog }: Mess
 
   async function handleSendRecording() {
     if (!currentDialog || audioChunksRef.current.length === 0) {
-      console.error('Cannot send recording: no dialog or no audio chunks');
       alert('No audio recorded. Please record a voice message first.');
       return;
     }
@@ -519,7 +538,6 @@ export default function MessageDrawer({ isOpen, profile, onClose, dialog }: Mess
       const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
       
       if (audioBlob.size === 0) {
-        console.error('Audio blob is empty');
         alert('Recording failed - no audio data captured.');
         handleCancelRecording();
         return;
@@ -533,7 +551,6 @@ export default function MessageDrawer({ isOpen, profile, onClose, dialog }: Mess
       const fileUrl = await uploadFile(audioFile);
       
       if (!fileUrl) {
-        console.error('Upload returned empty URL');
         alert('Failed to upload audio file.');
         setUploadingFile(false);
         return;
@@ -562,7 +579,6 @@ export default function MessageDrawer({ isOpen, profile, onClose, dialog }: Mess
       setMessages((currentMessages) => [...currentMessages, messageItem]);
       handleCancelRecording();
     } catch (error) {
-      console.error('Failed to send voice message:', error);
       alert('Failed to send voice message. Please try again.');
     } finally {
       setUploadingFile(false);
@@ -603,7 +619,6 @@ export default function MessageDrawer({ isOpen, profile, onClose, dialog }: Mess
       };
       setMessages((currentMessages) => [...currentMessages, messageItem]);
     } catch (error) {
-      console.error('Failed to upload file:', error);
     } finally {
       setUploadingFile(false);
       setUploadProgress(0);
@@ -729,7 +744,6 @@ export default function MessageDrawer({ isOpen, profile, onClose, dialog }: Mess
         cameraInput.click();
       }
     } catch (error) {
-      console.error('Camera capture failed:', error);
       // Fallback to file input
       const cameraInput = document.createElement('input');
       cameraInput.type = 'file';
@@ -799,11 +813,25 @@ export default function MessageDrawer({ isOpen, profile, onClose, dialog }: Mess
               <p className="mt-2 text-sm font-medium text-text-secondary">Creating conversation...</p>
             </div>
           </div>
-        ) : !currentDialog && !profile.connectyCubeUserId ? (
+        ) : resolvingUser ? (
+          <div className="flex flex-1 items-center justify-center">
+            <div className="text-center">
+              <div className="h-8 w-8 animate-spin rounded-full border-2 border-btn-primary border-t-transparent" />
+              <p className="mt-2 text-sm font-medium text-text-secondary">Resolving user...</p>
+            </div>
+          </div>
+        ) : resolutionError ? (
           <div className="flex flex-1 items-center justify-center">
             <div className="text-center">
               <p className="text-sm font-medium text-text-secondary">Cannot start conversation</p>
-              <p className="mt-1 text-xs text-text-placeholder">User does not have ConnectyCube ID</p>
+              <p className="mt-1 text-xs text-text-placeholder">{resolutionError}</p>
+            </div>
+          </div>
+        ) : !currentDialog && !profile.email ? (
+          <div className="flex flex-1 items-center justify-center">
+            <div className="text-center">
+              <p className="text-sm font-medium text-text-secondary">Cannot start conversation</p>
+              <p className="mt-1 text-xs text-text-placeholder">User email is required</p>
             </div>
           </div>
         ) : uploadingFile ? (

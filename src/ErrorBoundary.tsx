@@ -20,9 +20,6 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
 
   override componentDidCatch(error: Error, info: ErrorInfo): void {
     this.props.onError?.(error, info);
-    if (import.meta.env.DEV) {
-      console.error('[ErrorBoundary]', error, info.componentStack);
-    }
   }
 
   private reset = (): void => {
