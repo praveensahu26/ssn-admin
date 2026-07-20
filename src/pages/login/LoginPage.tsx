@@ -50,9 +50,7 @@ const LoginPage: React.FC = () => {
         try {
           initializeConnectyCube();
           await loginToConnectyCube(values.email, values.password);
-          console.log('ConnectyCube login successful');
         } catch (connectyCubeError) {
-          console.error('ConnectyCube login failed:', connectyCubeError);
           // Show error toast and don't proceed if ConnectyCube login fails
           toast.error('Failed to connect to chat service. Please check your credentials.');
           return;

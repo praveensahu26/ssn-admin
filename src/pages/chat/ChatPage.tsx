@@ -87,6 +87,7 @@ export default function ChatPage() {
                 profile={{
                   name: selectedConversation.user?.fullName || selectedConversation.user?.login || 'User',
                   username: selectedConversation.user?.login || 'username',
+                  email: selectedConversation.user?.email,
                   profilePicture: selectedConversation.user?.avatar,
                   connectyCubeUserId: selectedConversation.user?.id,
                 }}
@@ -130,6 +131,7 @@ export default function ChatPage() {
             ? {
                 name: selectedConversation.user?.fullName || selectedConversation.user?.login || 'User',
                 username: selectedConversation.user?.login || 'username',
+                email: selectedConversation.user?.email,
                 profilePicture: selectedConversation.user?.avatar,
                 connectyCubeUserId: selectedConversation.user?.id,
               }

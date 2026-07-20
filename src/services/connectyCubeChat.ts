@@ -64,7 +64,6 @@ export async function getDialogs(): Promise<Dialog[]> {
       updatedAt: dialog.updated_at ? new Date(dialog.updated_at).getTime() : undefined,
     }));
   } catch (error) {
-    console.error('Failed to get dialogs:', error);
     return [];
   }
 }
@@ -90,7 +89,6 @@ export async function getDialog(userId: number): Promise<Dialog | null> {
     }
     return null;
   } catch (error) {
-    console.error('Failed to get dialog:', error);
     return null;
   }
 }
@@ -116,7 +114,6 @@ export async function getDialogById(dialogId: string): Promise<Dialog | null> {
     }
     return null;
   } catch (error) {
-    console.error('Failed to get dialog by ID:', error);
     return null;
   }
 }
@@ -134,8 +131,6 @@ export async function createDialog(userId: number): Promise<Dialog> {
       unreadCount: 0,
     };
   } catch (error) {
-    console.error('Failed to create dialog:', error);
-    console.error('Error details:', JSON.stringify(error, null, 2));
     throw new Error(`Failed to create dialog with user ${userId}: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 }
@@ -162,8 +157,6 @@ export async function getMessages(dialogId: string, limit: number = 50, skip: nu
     
     return items.map((msg: any) => parseMessage(msg));
   } catch (error) {
-    console.error('Failed to get messages:', error);
-    console.error('Error details:', JSON.stringify(error, null, 2));
     return [];
   }
 }
@@ -205,8 +198,6 @@ export async function sendMessage(
     
     return parsedMessage;
   } catch (error) {
-    console.error('Failed to send message:', error);
-    console.error('Error details:', JSON.stringify(error, null, 2));
     throw new Error('Failed to send message');
   }
 }
@@ -240,12 +231,10 @@ export async function uploadFile(file: File, _onProgress?: (progress: number) =>
             // Try private URL first (requires authentication)
             fileUrl = CB.storage.privateUrl(uid);
           } catch (error) {
-            console.error('Failed to resolve private URL, trying public URL:', error);
             try {
               // Fallback to public URL
               fileUrl = CB.storage.publicUrl(uid);
             } catch (publicError) {
-              console.error('Failed to resolve public URL:', publicError);
               // Last resort: use UID directly (will likely fail but provides debugging info)
               fileUrl = uid;
             }
@@ -263,7 +252,6 @@ export async function uploadFile(file: File, _onProgress?: (progress: number) =>
         resolve(fileUrl);
       })
       .catch((error: any) => {
-        console.error('Failed to upload file:', error);
         reject(error);
       });
   });
@@ -275,7 +263,6 @@ export async function markAsRead(_dialogId: string, messageId: string): Promise<
   
   try {
     if (!session || !session.token) {
-      console.error('No session or token available for markAsRead');
       return;
     }
     
@@ -289,7 +276,6 @@ export async function markAsRead(_dialogId: string, messageId: string): Promise<
       body: JSON.stringify({ read: 1 }),
     });
   } catch (error) {
-    console.error('Failed to mark as read:', error);
   }
 }
 
@@ -306,7 +292,6 @@ export async function sendTypingStatus(dialogId: string, _isTyping: boolean): Pr
   try {
     await CB.chat.sendIsTypingStatus(dialogId);
   } catch (error) {
-    console.error('Failed to send typing status:', error);
   }
 }
 
@@ -378,11 +363,9 @@ function parseMessage(message: any): ChatMessage {
       try {
         url = CB.storage.privateUrl(att.uid);
       } catch (error) {
-        console.error('Failed to resolve private URL, trying public URL:', error);
         try {
           url = CB.storage.publicUrl(att.uid);
         } catch (publicError) {
-          console.error('Failed to resolve public URL:', publicError);
           url = att.uid; // Fallback to UID
         }
       }
@@ -432,7 +415,103 @@ export async function getUserInfo(userId: number): Promise<ChatUser | null> {
       customData: userData.custom_data || userData.customData,
     };
   } catch (error) {
-    console.error('Failed to get user info:', error);
     return null;
   }
+}
+
+// Cache for resolved ConnectyCube user IDs (email -> userId mapping)
+const resolvedUserIdsCache = new Map<string, number>();
+
+export async function resolveUserIdByEmail(email: string): Promise<number | null> {
+  await ensureAuthenticated();
+  const CB = getConnectyCube();
+  
+  // Check cache first
+  const cachedId = resolvedUserIdsCache.get(email.toLowerCase());
+  if (cachedId) {
+    return cachedId;
+  }
+  
+  try {
+    // Try multiple search strategies
+    
+    // Strategy 1: Search by email
+    try {
+      const response = await CB.users.get({ email: email.toLowerCase() });
+      const userData = response as any;
+      
+      let userId: number | null = null;
+      
+      // Handle different response formats
+      if (userData && userData.id) {
+        userId = userData.id;
+      } else if (userData && userData.user_id) {
+        userId = userData.user_id;
+      } else if (userData && Array.isArray(userData.items) && userData.items.length > 0) {
+        userId = userData.items[0].id || userData.items[0].user_id;
+      } else if (userData && userData.user && userData.user.id) {
+        userId = userData.user.id;
+      }
+      
+      if (userId) {
+        resolvedUserIdsCache.set(email.toLowerCase(), userId);
+        return userId;
+      }
+    } catch (error) {
+    }
+    
+    // Strategy 2: Search by login (email as login)
+    try {
+      const response = await CB.users.get({ login: email.toLowerCase() });
+      const userData = response as any;
+      
+      let userId: number | null = null;
+      
+      if (userData && userData.id) {
+        userId = userData.id;
+      } else if (userData && userData.user_id) {
+        userId = userData.user_id;
+      } else if (userData && Array.isArray(userData.items) && userData.items.length > 0) {
+        userId = userData.items[0].id || userData.items[0].user_id;
+      } else if (userData && userData.user && userData.user.id) {
+        userId = userData.user.id;
+      }
+      
+      if (userId) {
+        resolvedUserIdsCache.set(email.toLowerCase(), userId);
+        return userId;
+      }
+    } catch (error) {
+    }
+    
+    // Strategy 3: Get all users and filter by email
+    try {
+      const response = await CB.users.get({});
+      const userData = response as any;
+      
+      if (userData && Array.isArray(userData.items)) {
+        const user = userData.items.find((u: any) => 
+          u.email?.toLowerCase() === email.toLowerCase() || 
+          u.login?.toLowerCase() === email.toLowerCase()
+        );
+        
+        if (user) {
+          const userId = user.id || user.user_id;
+          if (userId) {
+            resolvedUserIdsCache.set(email.toLowerCase(), userId);
+            return userId;
+          }
+        }
+      }
+    } catch (error) {
+    }
+    
+    return null;
+  } catch (error) {
+    return null;
+  }
+}
+
+export function clearUserIdCache(): void {
+  resolvedUserIdsCache.clear();
 }

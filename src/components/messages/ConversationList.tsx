@@ -35,7 +35,6 @@ export default function ConversationList({ onSelectConversation, selectedConvers
         setCurrentUserId(user.id);
       }
     } catch (error) {
-      console.error('Failed to load current user:', error);
     }
   }
 
@@ -78,7 +77,6 @@ export default function ConversationList({ onSelectConversation, selectedConvers
       
       setConversations(conversationsWithUsers);
     } catch (error) {
-      console.error('Failed to load conversations:', error);
     } finally {
       setLoading(false);
     }

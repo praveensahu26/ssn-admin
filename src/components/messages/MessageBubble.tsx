@@ -43,7 +43,7 @@ export default function MessageBubble({ message, currentUserId, showAvatar, avat
               src={message.mediaUrl}
               alt={message.body}
               className="-mx-3 -my-2 max-h-[44vh] w-[320px] max-w-full rounded-md object-cover sm:w-[365px]"
-              onError={(e) => console.error('Image load error:', e)}
+              onError={() => {}}
             />
             <p className="text-xs text-text-secondary mt-2">{message.body}</p>
           </>

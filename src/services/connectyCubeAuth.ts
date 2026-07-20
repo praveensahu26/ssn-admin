@@ -42,7 +42,6 @@ async function restoreSessionFromSDK() {
     } else {
     }
   } catch (error) {
-    console.error('Failed to restore session from credentials:', error);
     // Clear invalid stored credentials
     localStorage.removeItem('connectyCubeCredentials');
   }
@@ -82,7 +81,6 @@ export async function loginToConnectyCube(
         customData: userData.custom_data || userData.customData,
       };
     } catch (userError) {
-      console.warn('Could not fetch user info (Users API may be disabled):', userError);
       // Continue without user info - session is still valid
       currentUser = {
         id: currentSession.userId,
@@ -99,8 +97,6 @@ export async function loginToConnectyCube(
     
     return currentSession;
   } catch (error) {
-    console.error('ConnectyCube login failed:', error);
-    console.error('Error details:', JSON.stringify(error, null, 2));
     throw new Error(`Failed to login to ConnectyCube: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 }
@@ -119,7 +115,6 @@ export async function connectToChat(): Promise<void> {
     });
     isChatConnected = true;
   } catch (error) {
-    console.error('Failed to connect to chat:', error);
     // Don't throw error - chat connection is optional for basic functionality
   }
 }
@@ -132,7 +127,6 @@ export function disconnectFromChat(): void {
       CB.chat.disconnect();
       isChatConnected = false;
     } catch (error) {
-      console.error('Error disconnecting from chat:', error);
     }
   }
 }
@@ -152,7 +146,6 @@ export async function logoutFromConnectyCube(): Promise<void> {
       await CB.auth.destroySession();
     }
   } catch (error) {
-    console.error('ConnectyCube logout error:', error);
   } finally {
     currentUser = null;
     currentSession = null;
@@ -178,7 +171,6 @@ export async function getCurrentUser(): Promise<ConnectyCubeUser | null> {
       };
       return currentUser;
     } catch (error) {
-      console.error('Failed to get current user:', error);
       // Return a basic user object from session data
       currentUser = {
         id: currentSession.userId,
@@ -190,7 +182,6 @@ export async function getCurrentUser(): Promise<ConnectyCubeUser | null> {
   }
   
   // Final fallback: return basic admin user if no session
-  console.warn('No session available, returning default admin user');
   return {
     id: 14922637,
     login: 'admin',
@@ -211,11 +202,9 @@ export function getCurrentUserId(): number | null {
       return session.user_id;
     }
   } catch (error) {
-    console.error('Failed to get user ID from SDK session:', error);
   }
   
   // Final fallback: return admin ID
-  console.warn('Could not get user ID from any source, returning admin ID');
   return 14922637;
 }
 

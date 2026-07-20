@@ -65,5 +65,8 @@
     "*.{js,jsx,json,css,md}": [
       "prettier --write"
     ]
+  },
+  "overrides": {
+    "ws": "^8.20.2"
   }
 }
