@@ -46,16 +46,16 @@ const LoginPage: React.FC = () => {
           values.keepLoggedIn
         );
         
-        // Initialize ConnectyCube and login
+        // Initialize ConnectyCube and login. Chat is a secondary feature — if it fails to
+        // connect (e.g. no ConnectyCube credentials configured locally), warn but still let
+        // the admin into the dashboard rather than locking them out entirely.
         try {
           initializeConnectyCube();
           await loginToConnectyCube(values.email, values.password);
-        } catch (connectyCubeError) {
-          // Show error toast and don't proceed if ConnectyCube login fails
-          toast.error('Failed to connect to chat service. Please check your credentials.');
-          return;
+        } catch {
+          toast.error('Failed to connect to chat service. Chat features may not work.');
         }
-        
+
         toast.success(response.message || 'Super admin logged in successfully');
         navigate(ROUTES.dashboard, { replace: true });
       } catch (error) {
