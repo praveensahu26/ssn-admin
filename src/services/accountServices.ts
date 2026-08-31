@@ -75,6 +75,31 @@ export interface AccountListMeta {
   totalPages: number;
 }
 
+export interface ReportedProfile extends AdminAccount {
+  reportCount: number;
+  lastReportedAt: string;
+}
+
+export interface ProfileReportReason {
+  reason: string;
+  count: number;
+}
+
+export interface ProfileReportRecord {
+  id: string;
+  reporter: { _id: string; name: string; avatar?: string | null };
+  reportedUser: string;
+  reason: string;
+  description: string | null;
+  createdAt: string;
+}
+
+export interface ProfileReportsResponse {
+  totalReports: number;
+  reasons: ProfileReportReason[];
+  reports: ProfileReportRecord[];
+}
+
 interface AccountListParams {
   role: AccountRole;
   tab?: AccountListTab;
@@ -161,4 +186,14 @@ export const accountServices = {
     unwrap<{ supporters: any[]; meta?: AccountListMeta }>(
       apiClient.get(`/campaigns/${campaignId}/support`, { params })
     ),
+
+  listReportedProfiles: (params: { page?: number; limit?: number } = {}) =>
+    unwrap<{ accounts: ReportedProfile[]; meta: AccountListMeta }>(
+      apiClient.get('/admin/accounts/reports', { params })
+    ),
+
+  getProfileReports: (id: string) =>
+    unwrap<ProfileReportsResponse>(apiClient.get(`/admin/accounts/${id}/reports`)),
+
+  dismissProfileReports: (id: string) => unwrap(apiClient.post(`/admin/accounts/${id}/reports/dismiss`, {})),
 };

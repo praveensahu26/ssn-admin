@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Eye, ExternalLink, X } from 'lucide-react';
 import MainLayout from '@/components/layout/MainLayout';
 import DataTable, { type ColumnConfig, type ActionConfig } from '@/components/ui/DataTable';
@@ -11,9 +11,16 @@ import {
   type ReportedCampaign,
   type CampaignReportsResponse,
 } from '@/services/adminCampaignServices';
+import { accountServices, type ReportedProfile, type ProfileReportsResponse } from '@/services/accountServices';
 import { getRelativeTime } from '@/utils/relativeTime';
 
-type Tab = 'posts' | 'campaigns';
+type Tab = 'posts' | 'campaigns' | 'profiles';
+
+const TAB_LABELS: Record<Tab, string> = {
+  posts: 'Reported Posts',
+  campaigns: 'Reported Campaigns',
+  profiles: 'Reported Profiles',
+};
 
 const DismissIcon: React.FC<{ className?: string }> = ({ className }) => <X className={className} />;
 const ViewIcon: React.FC<{ className?: string }> = ({ className }) => <Eye className={className} />;
@@ -23,15 +30,26 @@ interface BreakdownState {
   kind: Tab;
   id: string;
   title: string;
-  data: NewsReportsResponse | CampaignReportsResponse | null;
+  data: NewsReportsResponse | CampaignReportsResponse | ProfileReportsResponse | null;
   isLoading: boolean;
 }
 
+const TABS: Tab[] = ['posts', 'campaigns', 'profiles'];
+
 export function ReportsPage() {
   const navigate = useNavigate();
-  const [tab, setTab] = useState<Tab>('posts');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const initialTab = searchParams.get('tab') as Tab | null;
+  const [tab, setTab] = useState<Tab>(initialTab && TABS.includes(initialTab) ? initialTab : 'posts');
+
+  const handleTabChange = (nextTab: Tab) => {
+    setTab(nextTab);
+    setSearchParams({ tab: nextTab });
+  };
+
   const [posts, setPosts] = useState<ReportedNewsPost[]>([]);
   const [campaigns, setCampaigns] = useState<ReportedCampaign[]>([]);
+  const [profiles, setProfiles] = useState<ReportedProfile[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [breakdown, setBreakdown] = useState<BreakdownState | null>(null);
@@ -62,18 +80,32 @@ export function ReportsPage() {
     }
   }, []);
 
+  const loadProfiles = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const response = await accountServices.listReportedProfiles({ page: 1, limit: 100 });
+      setProfiles(response.data?.accounts ?? []);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unable to load reported profiles');
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     if (tab === 'posts') loadPosts();
-    else loadCampaigns();
-  }, [tab, loadPosts, loadCampaigns]);
+    else if (tab === 'campaigns') loadCampaigns();
+    else loadProfiles();
+  }, [tab, loadPosts, loadCampaigns, loadProfiles]);
 
   const openBreakdown = async (kind: Tab, id: string, title: string) => {
     setBreakdown({ kind, id, title, data: null, isLoading: true });
     try {
-      const data =
-        kind === 'posts'
-          ? (await adminNewsServices.getNewsReports(id)).data
-          : (await adminCampaignServices.getCampaignReports(id)).data;
+      let data;
+      if (kind === 'posts') data = (await adminNewsServices.getNewsReports(id)).data;
+      else if (kind === 'campaigns') data = (await adminCampaignServices.getCampaignReports(id)).data;
+      else data = (await accountServices.getProfileReports(id)).data;
       setBreakdown((prev) => (prev && prev.id === id ? { ...prev, data: data ?? null, isLoading: false } : prev));
     } catch {
       setBreakdown((prev) => (prev && prev.id === id ? { ...prev, isLoading: false } : prev));
@@ -85,9 +117,12 @@ export function ReportsPage() {
       if (kind === 'posts') {
         await adminNewsServices.dismissNewsReports(id);
         setPosts((prev) => prev.filter((p) => p.id !== id));
-      } else {
+      } else if (kind === 'campaigns') {
         await adminCampaignServices.dismissCampaignReports(id);
         setCampaigns((prev) => prev.filter((c) => c.id !== id));
+      } else {
+        await accountServices.dismissProfileReports(id);
+        setProfiles((prev) => prev.filter((p) => p.id !== id));
       }
       setBreakdown((prev) => (prev && prev.id === id ? null : prev));
     } catch {
@@ -147,6 +182,30 @@ export function ReportsPage() {
     { key: 'lastReportedAt', header: 'Last Reported', render: (row) => getRelativeTime(row.lastReportedAt) },
   ];
 
+  const profileColumns: ColumnConfig<ReportedProfile>[] = [
+    {
+      key: 'name',
+      header: 'Profile',
+      render: (row) => (
+        <div className="flex max-w-[280px] items-center gap-3">
+          {row.profileImage && <img src={row.profileImage} alt="" className="h-10 w-10 shrink-0 rounded-full object-cover" />}
+          <span className="truncate text-md-custom font-medium text-text-primary">{row.name}</span>
+        </div>
+      ),
+    },
+    { key: 'role', header: 'Role', render: (row) => (row.role === 'reporter' ? 'Reporter' : 'User') },
+    {
+      key: 'reportCount',
+      header: 'Reports',
+      render: (row) => (
+        <span className="rounded-md bg-red-50 px-2 py-1 text-sm-custom font-semibold text-red-600">
+          {row.reportCount}
+        </span>
+      ),
+    },
+    { key: 'lastReportedAt', header: 'Last Reported', render: (row) => getRelativeTime(row.lastReportedAt) },
+  ];
+
   const postActions: ActionConfig<ReportedNewsPost>[] = [
     { icon: ViewIcon, onClick: (row) => openBreakdown('posts', row.id, row.caption || 'Post'), tooltip: 'View report reasons' },
     { icon: OpenIcon, onClick: (row) => navigate(`${ROUTES.newsFeed}/${row.id}`), tooltip: 'Open post' },
@@ -159,6 +218,16 @@ export function ReportsPage() {
     { icon: DismissIcon, onClick: (row) => handleDismiss('campaigns', row.id), tooltip: 'Dismiss reports' },
   ];
 
+  const profileActions: ActionConfig<ReportedProfile>[] = [
+    { icon: ViewIcon, onClick: (row) => openBreakdown('profiles', row.id, row.name || 'Profile'), tooltip: 'View report reasons' },
+    {
+      icon: OpenIcon,
+      onClick: (row) => navigate(`${row.role === 'reporter' ? ROUTES.reporters : ROUTES.users}/${row.username}`),
+      tooltip: 'Open profile',
+    },
+    { icon: DismissIcon, onClick: (row) => handleDismiss('profiles', row.id), tooltip: 'Dismiss reports' },
+  ];
+
   return (
     <MainLayout>
       <div className="flex flex-col gap-4">
@@ -166,16 +235,16 @@ export function ReportsPage() {
 
         {/* Tabs */}
         <div className="flex gap-3">
-          {(['posts', 'campaigns'] as Tab[]).map((t) => (
+          {TABS.map((t) => (
             <button
               key={t}
               type="button"
-              onClick={() => setTab(t)}
+              onClick={() => handleTabChange(t)}
               className={`h-11 rounded-lg border px-6 text-md-custom font-medium transition-colors font-poppins ${
                 tab === t ? 'border-btn-primary bg-btn-primary text-white' : 'border-[#DCE5EF] bg-white text-text-secondary'
               }`}
             >
-              {t === 'posts' ? 'Reported Posts' : 'Reported Campaigns'}
+              {TAB_LABELS[t]}
             </button>
           ))}
         </div>
@@ -199,7 +268,7 @@ export function ReportsPage() {
             searchKeys={['caption']}
             searchPlaceholder="Search reported posts"
           />
-        ) : (
+        ) : tab === 'campaigns' ? (
           <DataTable
             title="Reported Campaigns"
             data={campaigns}
@@ -207,6 +276,15 @@ export function ReportsPage() {
             actions={campaignActions}
             searchKeys={['caption']}
             searchPlaceholder="Search reported campaigns"
+          />
+        ) : (
+          <DataTable
+            title="Reported Profiles"
+            data={profiles}
+            columns={profileColumns}
+            actions={profileActions}
+            searchKeys={['name']}
+            searchPlaceholder="Search reported profiles"
           />
         )}
       </div>

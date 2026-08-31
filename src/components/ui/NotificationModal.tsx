@@ -38,6 +38,13 @@ const NOTIFICATION_META: Partial<
     buildMessage: (n) => `A campaign has been reported${n.data.message ? ` for ${n.data.message}` : ''}. Review it now.`,
     getPath: (n) => (n.data.campaignId ? `${ROUTES.campaigns}/${n.data.campaignId}` : null),
   },
+  admin_report_profile: {
+    title: 'Reported Profile Alert',
+    icon: 'user',
+    actionLabel: 'View Profile',
+    buildMessage: (n) => `A profile has been reported${n.data.message ? ` for ${n.data.message}` : ''}. Review it now.`,
+    getPath: () => `${ROUTES.reports}?tab=profiles`,
+  },
   admin_reporter_signup: {
     title: 'New Reporter Registration',
     icon: 'user',

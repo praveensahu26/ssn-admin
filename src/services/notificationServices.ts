@@ -19,6 +19,7 @@ export type NotificationType =
   | 'admin_suspended'
   | 'admin_report_post'
   | 'admin_report_campaign'
+  | 'admin_report_profile'
   | 'admin_reporter_signup';
 
 export interface AppNotification {
@@ -32,6 +33,7 @@ export interface AppNotification {
     commentId?: string | null;
     campaignId?: string | null;
     reporterId?: string | null;
+    reportedUserId?: string | null;
     scheduledAt?: string | null;
     message?: string | null;
   };
