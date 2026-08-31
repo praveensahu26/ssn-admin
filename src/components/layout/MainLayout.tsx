@@ -4,6 +4,9 @@ import { Menu, X } from 'lucide-react';
 import { useAuthData } from '@/hooks/useAuthData';
 import { ROUTES } from '@/config/routes';
 import NotificationModal from '@/components/ui/NotificationModal';
+import { notificationServices } from '@/services/notificationServices';
+
+const UNREAD_POLL_INTERVAL_MS = 30000;
 
 interface MainLayoutProps {
   children: React.ReactNode;
@@ -18,6 +21,36 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   const [notifOpen, setNotifOpen] = useState(false);
   const notifBtnRef = useRef<HTMLButtonElement>(null);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const fetchUnreadCount = async () => {
+      try {
+        const response = await notificationServices.getUnreadCount();
+        if (isMounted && response.data) {
+          setUnreadCount(response.data.count);
+        }
+      } catch {
+        // Ignore — badge just stays at its last known value.
+      }
+    };
+
+    fetchUnreadCount();
+    const interval = setInterval(fetchUnreadCount, UNREAD_POLL_INTERVAL_MS);
+
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (notifOpen) {
+      setUnreadCount(0);
+    }
+  }, [notifOpen]);
 
   // Close dropdown when clicking outside
   useEffect(() => {
@@ -70,6 +103,18 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
       path: ROUTES.campaigns,
       activeIcon: '/icons/sidebar/campaignsActive.svg',
       inactiveIcon: '/icons/sidebar/campaignsInactive.svg',
+    },
+    {
+      name: 'Reports',
+      path: ROUTES.reports,
+      activeIcon: '/icons/sidebar/reportsActive.svg',
+      inactiveIcon: '/icons/sidebar/reportsInactive.svg',
+    },
+    {
+      name: 'Categories',
+      path: ROUTES.categories,
+      activeIcon: '/icons/sidebar/categoriesActive.svg',
+      inactiveIcon: '/icons/sidebar/categoriesInactive.svg',
     },
     {
       name: 'Settings',
@@ -219,9 +264,14 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
                 onClick={() => setNotifOpen((prev) => !prev)}
                 aria-label="Open notifications"
                 aria-expanded={notifOpen}
-                className="w-10 h-10 rounded-xl border border-[#DCE5EF] flex items-center justify-center bg-white shadow-card"
+                className="relative w-10 h-10 rounded-xl border border-[#DCE5EF] flex items-center justify-center bg-white shadow-card"
               >
                 <img src="/icons/notificationIcon.svg" alt="Notifications" className="w-[20px] h-[20px] object-contain" />
+                {unreadCount > 0 && (
+                  <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-medium leading-none text-white">
+                    {unreadCount > 9 ? '9+' : unreadCount}
+                  </span>
+                )}
               </button>
 
               <NotificationModal
@@ -252,7 +302,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
 
 
                   <button
-                    onClick={() => { setProfileMenuOpen(false); }}
+                    onClick={() => { setProfileMenuOpen(false); navigate(`${ROUTES.settings}?tab=profile`); }}
                     className="flex items-center gap-1 w-full px-4 py-2"
                   >
                     <img src="/icons/editProfile.svg" alt="Edit Profile" className="w-5 h-5 object-contain" />
@@ -260,7 +310,7 @@ export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
                   </button>
 
                   <button
-                    onClick={() => { setProfileMenuOpen(false); }}
+                    onClick={() => { setProfileMenuOpen(false); navigate(`${ROUTES.settings}?tab=account`); }}
                     className="flex items-center gap-1 w-full px-4 py-2"
                   >
                     <img src="/icons/accountSettings.svg" alt="Account Settings" className="w-5 h-5 object-contain" />

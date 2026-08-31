@@ -1,20 +1,16 @@
 import { ChevronDown } from 'lucide-react';
-import React, { useEffect, useRef } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { ROUTES } from '@/config/routes';
+import { notificationServices, type AppNotification, type NotificationType } from '@/services/notificationServices';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-interface Notification {
-  id: number;
-  title: string;
-  message: string;
-  actionLabel: string;
-  time: string; // e.g. "2h" or "02, Sep"
-  icon: 'alert' | 'user' | 'megaphone';
-}
+type NotificationIcon = 'alert' | 'user' | 'megaphone';
 
 interface NotificationGroup {
-  label: string; // "Today" | "This week" | etc.
-  items: Notification[];
+  label: string;
+  items: AppNotification[];
 }
 
 interface NotificationModalProps {
@@ -23,52 +19,43 @@ interface NotificationModalProps {
   anchorRef?: React.RefObject<HTMLElement | null>;
 }
 
-// ─── Dummy Data ───────────────────────────────────────────────────────────────
+// ─── Type → copy/icon/route mapping ────────────────────────────────────────────
 
-const NOTIFICATIONS: NotificationGroup[] = [
-  {
-    label: 'Today',
-    items: [
-      {
-        id: 1,
-        title: 'Reported Content Alert',
-        message: 'A post has been reported for inappropriate content. Review it now.',
-        actionLabel: 'View Post',
-        time: '2h',
-        icon: 'alert',
-      },
-      {
-        id: 2,
-        title: 'New Reporter Registration',
-        message: 'A new reporter has signed up and is awaiting verification.',
-        actionLabel: 'View reporter',
-        time: '2h',
-        icon: 'user',
-      },
-      {
-        id: 3,
-        title: 'Fake News Flagged',
-        message: 'A news article has been flagged for misinformation. Please verify.',
-        actionLabel: 'View Post',
-        time: '2h',
-        icon: 'alert',
-      },
-    ],
+const NOTIFICATION_META: Partial<
+  Record<NotificationType, { title: string; icon: NotificationIcon; actionLabel: string; buildMessage: (n: AppNotification) => string; getPath?: (n: AppNotification) => string | null }>
+> = {
+  admin_report_post: {
+    title: 'Reported Content Alert',
+    icon: 'alert',
+    actionLabel: 'View Post',
+    buildMessage: (n) => `A post has been reported${n.data.message ? ` for ${n.data.message}` : ''}. Review it now.`,
+    getPath: (n) => (n.data.newsId ? `${ROUTES.newsFeed}/${n.data.newsId}` : null),
   },
-  {
-    label: 'This week',
-    items: [
-      {
-        id: 4,
-        title: 'Campaign Approval Request',
-        message: 'A new campaign is awaiting admin approval.',
-        actionLabel: 'View Campaign',
-        time: '02, Sep',
-        icon: 'megaphone',
-      },
-    ],
+  admin_report_campaign: {
+    title: 'Reported Campaign Alert',
+    icon: 'megaphone',
+    actionLabel: 'View Campaign',
+    buildMessage: (n) => `A campaign has been reported${n.data.message ? ` for ${n.data.message}` : ''}. Review it now.`,
+    getPath: (n) => (n.data.campaignId ? `${ROUTES.campaigns}/${n.data.campaignId}` : null),
   },
-];
+  admin_reporter_signup: {
+    title: 'New Reporter Registration',
+    icon: 'user',
+    actionLabel: 'View Reporters',
+    buildMessage: () => 'A new reporter has signed up and is awaiting verification.',
+    getPath: () => ROUTES.reporters,
+  },
+};
+
+const DEFAULT_META = {
+  title: 'Notification',
+  icon: 'alert' as NotificationIcon,
+  actionLabel: '',
+  buildMessage: (n: AppNotification) => n.data.message || '',
+  getPath: () => null,
+};
+
+const getMeta = (type: NotificationType) => NOTIFICATION_META[type] || DEFAULT_META;
 
 // ─── Icon Components ──────────────────────────────────────────────────────────
 
@@ -93,20 +80,85 @@ const MegaphoneIcon: React.FC = () => (
   </svg>
 );
 
-const iconMap: Record<Notification['icon'], React.FC> = {
+const iconMap: Record<NotificationIcon, React.FC> = {
   alert: AlertIcon,
   user: UserIcon,
   megaphone: MegaphoneIcon,
 };
 
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+const formatTime = (isoDate: string) => {
+  const date = new Date(isoDate);
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+
+  if (diffHours < 1) return 'Just now';
+  if (diffHours < 24) return `${diffHours}h`;
+
+  return date.toLocaleDateString(undefined, { day: '2-digit', month: 'short' });
+};
+
+const groupNotifications = (items: AppNotification[]): NotificationGroup[] => {
+  const now = new Date();
+  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const weekAgo = new Date(startOfToday.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+  const today: AppNotification[] = [];
+  const thisWeek: AppNotification[] = [];
+  const earlier: AppNotification[] = [];
+
+  items.forEach((item) => {
+    const createdAt = new Date(item.createdAt);
+    if (createdAt >= startOfToday) {
+      today.push(item);
+    } else if (createdAt >= weekAgo) {
+      thisWeek.push(item);
+    } else {
+      earlier.push(item);
+    }
+  });
+
+  return [
+    { label: 'Today', items: today },
+    { label: 'This week', items: thisWeek },
+    { label: 'Earlier', items: earlier },
+  ].filter((group) => group.items.length > 0);
+};
+
 // ─── Component ────────────────────────────────────────────────────────────────
 
-const NotificationModal: React.FC<NotificationModalProps> = ({
-  isOpen,
-  onClose,
-  anchorRef,
-}) => {
+const PAGE_LIMIT = 10;
+
+const NotificationModal: React.FC<NotificationModalProps> = ({ isOpen, onClose, anchorRef }) => {
   const modalRef = useRef<HTMLDivElement>(null);
+  const navigate = useNavigate();
+  const [notifications, setNotifications] = useState<AppNotification[]>([]);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const loadPage = useCallback(async (pageToLoad: number) => {
+    setIsLoading(true);
+    try {
+      const response = await notificationServices.list({ page: pageToLoad, limit: PAGE_LIMIT });
+      const items = response.data?.notifications || [];
+      setNotifications((prev) => (pageToLoad === 1 ? items : [...prev, ...items]));
+      setPage(pageToLoad);
+      setHasMore(response.meta ? pageToLoad < response.meta.totalPages : false);
+    } catch {
+      // Silently ignore — the bell just stays empty rather than breaking the layout.
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (isOpen) {
+      loadPage(1);
+    }
+  }, [isOpen, loadPage]);
 
   // Close on outside click
   useEffect(() => {
@@ -126,6 +178,21 @@ const NotificationModal: React.FC<NotificationModalProps> = ({
 
   if (!isOpen) return null;
 
+  const groups = groupNotifications(notifications);
+
+  const handleAction = async (notification: AppNotification) => {
+    const meta = getMeta(notification.type);
+    if (!notification.read) {
+      notificationServices.markAsRead(notification.id).catch(() => {});
+      setNotifications((prev) => prev.map((n) => (n.id === notification.id ? { ...n, read: true } : n)));
+    }
+    const path = meta.getPath?.(notification);
+    if (path) {
+      onClose();
+      navigate(path);
+    }
+  };
+
   return (
     <>
       {/* Invisible backdrop */}
@@ -142,8 +209,6 @@ const NotificationModal: React.FC<NotificationModalProps> = ({
           top: '78px',
         }}
       >
-
-
         {/* Header */}
         <div className="px-4 pt-4 pb-2 sm:px-5">
           <h2 className="text-[18px] font-medium text-text-primary font-poppins">
@@ -153,8 +218,14 @@ const NotificationModal: React.FC<NotificationModalProps> = ({
 
         {/* Notification list */}
         <div className="no-scrollbar max-h-[420px] overflow-y-auto sm:max-h-[480px]">
-          {NOTIFICATIONS.map((group, gi) => (
-            <div key={gi}>
+          {groups.length === 0 && !isLoading && (
+            <p className="px-4 py-6 text-center text-sm-custom text-text-secondary font-poppins sm:px-5">
+              No notifications yet.
+            </p>
+          )}
+
+          {groups.map((group, gi) => (
+            <div key={group.label}>
               {/* Group label */}
               <div className="px-4 py-2 sm:px-5">
                 <span className="text-xs-custom font-medium text-text-secondary font-poppins">
@@ -164,10 +235,11 @@ const NotificationModal: React.FC<NotificationModalProps> = ({
 
               {/* Items */}
               {group.items.map((notif, ni) => {
-                const IconComp = iconMap[notif.icon];
+                const meta = getMeta(notif.type);
+                const IconComp = iconMap[meta.icon];
                 return (
                   <div key={notif.id}>
-                    <div className="flex items-start gap-3 px-4 py-3 sm:px-5">
+                    <div className={`flex items-start gap-3 px-4 py-3 sm:px-5 ${notif.read ? '' : 'bg-[#F4F7FC]/60'}`}>
                       {/* Icon bubble */}
                       <div className="mt-0.5 flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full border border-[#DCE5EF] bg-[#F4F7FC] sm:h-10 sm:w-10">
                         <IconComp />
@@ -177,23 +249,29 @@ const NotificationModal: React.FC<NotificationModalProps> = ({
                       <div className="flex-1 min-w-0">
                         <div className="flex items-start justify-between gap-2">
                           <span className="text-md-custom font-medium text-text-primary font-poppins leading-snug">
-                            {notif.title}
+                            {meta.title}
                           </span>
                           <span className="text-xs-custom text-text-secondary font-poppins flex-shrink-0 mt-0.5">
-                            {notif.time}
+                            {formatTime(notif.createdAt)}
                           </span>
                         </div>
                         <p className="text-sm-custom text-text-secondary font-poppins leading-snug mt-0.5">
-                          {notif.message}
+                          {meta.buildMessage(notif)}
                         </p>
-                        <button className="text-sm-custom text-btn-primary font-medium font-poppins mt-1 underline">
-                          {notif.actionLabel}
-                        </button>
+                        {meta.actionLabel && (
+                          <button
+                            type="button"
+                            className="text-sm-custom text-btn-primary font-medium font-poppins mt-1 underline"
+                            onClick={() => handleAction(notif)}
+                          >
+                            {meta.actionLabel}
+                          </button>
+                        )}
                       </div>
                     </div>
 
                     {/* Divider — not after last item in last group */}
-                    {!(gi === NOTIFICATIONS.length - 1 && ni === group.items.length - 1) && (
+                    {!(gi === groups.length - 1 && ni === group.items.length - 1) && (
                       <div className="mx-4 border-b border-[#DCE5EF] sm:mx-5" />
                     )}
                   </div>
@@ -204,12 +282,19 @@ const NotificationModal: React.FC<NotificationModalProps> = ({
         </div>
 
         {/* Load more */}
-        <div className="border-t border-[#DCE5EF] px-4 py-3 sm:px-5">
-          <button className="flex items-center gap-1.5 text-md-custom font-medium text-text-primary font-poppins">
-            Load more
-            <ChevronDown size={16} />
-          </button>
-        </div>
+        {hasMore && (
+          <div className="border-t border-[#DCE5EF] px-4 py-3 sm:px-5">
+            <button
+              type="button"
+              className="flex items-center gap-1.5 text-md-custom font-medium text-text-primary font-poppins disabled:opacity-50"
+              onClick={() => loadPage(page + 1)}
+              disabled={isLoading}
+            >
+              Load more
+              <ChevronDown size={16} />
+            </button>
+          </div>
+        )}
       </div>
     </>
   );

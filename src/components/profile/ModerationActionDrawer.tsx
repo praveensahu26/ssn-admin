@@ -75,7 +75,7 @@ export const moderationActionConfigs = {
   suspend: {
     title: 'Suspend User Account',
     descriptionLines: [
-      'This user will be restricted from posting, commenting, or engaging with content for a set duration. They will still have access to their account but cannot participate in platform activities.',
+      'This user will be logged out and unable to sign back in. The account stays suspended until an Admin manually restores it — it will not become active on its own.',
     ],
     reasonTitle: 'Reason for Suspension',
     reasons: ['Policy Violation', 'Repeated Content Violations', 'Temporarily Restricting Activity', 'Others'],

@@ -18,6 +18,8 @@ const NewsFeedPostDetailsPage = lazy(() => import('@/pages/news-feed/NewsFeedPos
 const CampaignsPage = lazy(() => import('@/pages/campaigns/CampaignsPage'));
 const CampaignDetailsPage = lazy(() => import('@/pages/campaigns/CampaignDetailsPage'));
 const SettingsPage = lazy(() => import('@/pages/settings/SettingsPage'));
+const ReportsPage = lazy(() => import('@/pages/reports/ReportsPage'));
+const CategoriesPage = lazy(() => import('@/pages/categories/CategoriesPage'));
 const ChatPage = lazy(() => import('@/pages/chat/ChatPage'));
 const LoginPage = lazy(() => import('@/pages/login/LoginPage'));
 const ForgotPasswordPage = lazy(() => import('@/pages/forgot-password/ForgotPasswordPage'));
@@ -59,6 +61,8 @@ const AppRouter = () => {
             <Route path={`${ROUTES.campaigns}/:id`} element={<CampaignDetailsPage />} />
             <Route path={ROUTES.chat} element={<ChatPage />} />
             <Route path={ROUTES.settings} element={<SettingsPage />} />
+            <Route path={ROUTES.reports} element={<ReportsPage />} />
+            <Route path={ROUTES.categories} element={<CategoriesPage />} />
           </Route>
 
           <Route path={ROUTES.notFound} element={<div className="p-8 flex items-center justify-center h-screen text-3xl font-bold text-black">404 - Page Not Found</div>} />

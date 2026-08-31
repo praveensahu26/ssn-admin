@@ -89,6 +89,31 @@ export const suspensionReasonValues = [
 
 export type SuspensionReason = (typeof suspensionReasonValues)[number];
 
+export interface ReportedCampaign extends AdminCampaign {
+  reportCount: number;
+  lastReportedAt: string;
+}
+
+export interface CampaignReportReason {
+  reason: string;
+  count: number;
+}
+
+export interface CampaignReportRecord {
+  id: string;
+  reporter: { _id: string; name: string; avatar?: string | null };
+  campaign: string;
+  reason: string;
+  description: string | null;
+  createdAt: string;
+}
+
+export interface CampaignReportsResponse {
+  totalReports: number;
+  reasons: CampaignReportReason[];
+  reports: CampaignReportRecord[];
+}
+
 // ─── Service ──────────────────────────────────────────────────────────────────
 
 export const adminCampaignServices = {
@@ -109,6 +134,25 @@ export const adminCampaignServices = {
     unwrap<{ stats: CampaignStats }>(
       apiClient.get('/admin/campaigns/stats')
     ),
+
+  /**
+   * GET /v1/admin/campaigns/reports
+   */
+  listReportedCampaigns: (params: { page?: number; limit?: number } = {}) =>
+    unwrap<{ campaigns: ReportedCampaign[]; meta: CampaignListMeta }>(
+      apiClient.get('/admin/campaigns/reports', { params })
+    ),
+
+  /**
+   * GET /v1/admin/campaigns/:id/reports
+   */
+  getCampaignReports: (id: string) =>
+    unwrap<CampaignReportsResponse>(apiClient.get(`/admin/campaigns/${id}/reports`)),
+
+  /**
+   * POST /v1/admin/campaigns/:id/reports/dismiss
+   */
+  dismissCampaignReports: (id: string) => unwrap(apiClient.post(`/admin/campaigns/${id}/reports/dismiss`, {})),
 
   /**
    * GET /v1/admin/campaigns/:id

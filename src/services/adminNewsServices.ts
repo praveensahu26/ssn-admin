@@ -53,6 +53,31 @@ export interface ListNewsParams {
   limit?: number;
 }
 
+export interface ReportedNewsPost extends AdminNewsPost {
+  reportCount: number;
+  lastReportedAt: string;
+}
+
+export interface ReportReason {
+  reason: string;
+  count: number;
+}
+
+export interface ReportRecord {
+  id: string;
+  reporter: { _id: string; name: string; avatar?: string | null };
+  news: string;
+  reason: string;
+  description: string | null;
+  createdAt: string;
+}
+
+export interface NewsReportsResponse {
+  totalReports: number;
+  reasons: ReportReason[];
+  reports: ReportRecord[];
+}
+
 export const adminNewsServices = {
   /**
    * GET /v1/admin/news
@@ -61,6 +86,25 @@ export const adminNewsServices = {
     unwrap<{ posts: AdminNewsPost[]; meta: NewsListMeta }>(
       apiClient.get('/admin/news', { params })
     ),
+
+  /**
+   * GET /v1/admin/news/reports
+   */
+  listReportedNews: (params: { page?: number; limit?: number } = {}) =>
+    unwrap<{ posts: ReportedNewsPost[]; meta: NewsListMeta }>(
+      apiClient.get('/admin/news/reports', { params })
+    ),
+
+  /**
+   * GET /v1/admin/news/:id/reports
+   */
+  getNewsReports: (id: string) =>
+    unwrap<NewsReportsResponse>(apiClient.get(`/admin/news/${id}/reports`)),
+
+  /**
+   * POST /v1/admin/news/:id/reports/dismiss
+   */
+  dismissNewsReports: (id: string) => unwrap(apiClient.post(`/admin/news/${id}/reports/dismiss`, {})),
 
   /**
    * GET /v1/admin/news/:id

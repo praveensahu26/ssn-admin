@@ -12,6 +12,8 @@ export const ROUTES = {
   campaigns: '/campaigns',
   chat: '/chat',
   settings: '/settings',
+  reports: '/reports',
+  categories: '/categories',
   notFound: '*',
 } as const;
 
