@@ -332,7 +332,7 @@ export function DataTable<T extends { id: string; name?: string; profilePicture?
               ))}
               {actions.length > 0 && (
                 <th
-                  className="py-4 px-6 text-text-secondary font-medium text-md-custom text-left whitespace-nowrap"
+                  className="py-4 px-6 text-text-secondary font-medium text-md-custom text-right whitespace-nowrap"
                   style={{ minWidth: `${Math.max(actions.length, 2) * 48 + 24}px` }}
                 >
                   Action
