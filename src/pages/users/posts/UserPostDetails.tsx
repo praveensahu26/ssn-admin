@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 import DetailsHeader from '@/components/details/DetailsHeader';
 import DetailsLayout from '@/components/details/DetailsLayout';
@@ -8,10 +8,14 @@ import PostCommentsPanel from '@/components/posts/PostCommentsPanel';
 import PostInfo from '@/components/posts/PostInfo';
 import PostLikesPanel from '@/components/posts/PostLikesPanel';
 import { accountServices } from '@/services/accountServices';
+import { adminNewsServices } from '@/services/adminNewsServices';
 import { getRelativeTime } from '@/utils/relativeTime';
+import { getProfilePath } from '@/utils/profileRoutes';
+import { toast } from '@/lib/toast';
 
 export function UserPostDetails() {
   const { postId } = useParams<{ username: string; postId: string }>();
+  const navigate = useNavigate();
   const [rightPanel, setRightPanel] = useState<'comments' | 'likes'>('comments');
 
   const [post, setPost] = useState<any | null>(null);
@@ -89,6 +93,17 @@ export function UserPostDetails() {
     loadData();
   }, [postId]);
 
+  const handleDelete = async () => {
+    if (!postId) return;
+    try {
+      await adminNewsServices.deleteNews(postId);
+      toast.success('Post deleted successfully');
+      navigate(author ? getProfilePath('user', author.name) : '/users');
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Unable to delete post');
+    }
+  };
+
   if (isLoading) {
     return (
       <MainLayout>
@@ -120,6 +135,7 @@ export function UserPostDetails() {
               author={author}
               onShowLikes={() => setRightPanel('likes')}
               onShowComments={() => setRightPanel('comments')}
+              onDelete={handleDelete}
             />
           </>
         }
