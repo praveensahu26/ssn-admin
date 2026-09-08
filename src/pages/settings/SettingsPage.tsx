@@ -163,10 +163,6 @@ function AccountSettingsTab() {
             <span className="text-text-secondary">Email</span>
             <span className="font-medium text-text-primary">{account?.email || '—'}</span>
           </div>
-          <div className="flex justify-between text-sm-custom">
-            <span className="text-text-secondary">Mobile</span>
-            <span className="font-medium text-text-primary">{account?.mobile || '—'}</span>
-          </div>
         </div>
       </div>
 
