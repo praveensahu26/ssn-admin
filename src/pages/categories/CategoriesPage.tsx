@@ -18,6 +18,9 @@ export function CategoriesPage() {
   const [form, setForm] = useState({ name: '', description: '' });
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<Category | null>(null);
+  const [isCheckingDelete, setIsCheckingDelete] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const loadCategories = async () => {
     setIsLoading(true);
@@ -67,12 +70,36 @@ export function CategoriesPage() {
     }
   };
 
-  const handleDelete = async (id: string) => {
+  const handleDeleteClick = async (category: Category) => {
+    setError(null);
+    setIsCheckingDelete(category.id);
     try {
-      await categoryServices.remove(id);
-      setCategories((prev) => prev.filter((c) => c.id !== id));
+      const response = await categoryServices.checkDeletable(category.id);
+      if (response.data && !response.data.canDelete) {
+        setError('This category cannot be deleted because it contains active data.');
+        return;
+      }
+      setDeleteTarget(category);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unable to check category deletion eligibility');
+    } finally {
+      setIsCheckingDelete(null);
+    }
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deleteTarget) return;
+    setIsDeleting(true);
+    setError(null);
+    try {
+      await categoryServices.remove(deleteTarget.id);
+      setCategories((prev) => prev.filter((c) => c.id !== deleteTarget.id));
+      setDeleteTarget(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unable to delete category');
+      setDeleteTarget(null);
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -83,7 +110,12 @@ export function CategoriesPage() {
 
   const actions: ActionConfig<Category>[] = [
     { icon: EditIcon, onClick: openEditForm, tooltip: 'Edit' },
-    { icon: DeleteIcon, onClick: (row) => handleDelete(row.id), tooltip: 'Delete' },
+    {
+      icon: DeleteIcon,
+      onClick: (row) => handleDeleteClick(row),
+      disabled: (row) => isCheckingDelete === row.id,
+      tooltip: 'Delete',
+    },
   ];
 
   return (
@@ -160,6 +192,44 @@ export function CategoriesPage() {
                 {editingId ? 'Save Changes' : 'Create Category'}
               </SubmitButton>
             </form>
+          </div>
+        </div>
+      )}
+
+      {deleteTarget && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/20 backdrop-blur-[1px]">
+          <div className="w-full max-w-[420px] rounded-xl border border-[#DCE5EF] bg-white p-6 shadow-card">
+            <div className="flex items-center justify-between">
+              <h3 className="text-base-custom font-medium text-text-primary">Delete Category</h3>
+              <button
+                type="button"
+                aria-label="Close"
+                className="flex h-7 w-7 items-center justify-center rounded-full border border-[#DCE5EF]"
+                onClick={() => setDeleteTarget(null)}
+                disabled={isDeleting}
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+
+            <p className="mt-4 text-sm-custom text-text-secondary">
+              Are you sure you want to delete <span className="font-medium text-text-primary">{deleteTarget.name}</span>?
+              This action cannot be undone.
+            </p>
+
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                type="button"
+                className="rounded-lg border border-[#DCE5EF] px-4 py-2 text-sm-custom font-medium text-text-secondary"
+                onClick={() => setDeleteTarget(null)}
+                disabled={isDeleting}
+              >
+                No
+              </button>
+              <SubmitButton type="button" isLoading={isDeleting} onClick={handleConfirmDelete}>
+                Yes
+              </SubmitButton>
+            </div>
           </div>
         </div>
       )}

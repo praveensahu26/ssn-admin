@@ -13,6 +13,13 @@ export interface CategoryPayload {
   description?: string | null;
 }
 
+export interface CategoryDeletionCheck {
+  canDelete: boolean;
+  newsCount: number;
+  campaignCount: number;
+  liveStreamCount: number;
+}
+
 export const categoryServices = {
   list: () => unwrap<{ categories: Category[] }>(apiClient.get('/admin/categories')),
 
@@ -22,6 +29,8 @@ export const categoryServices = {
 
   update: (id: string, payload: CategoryPayload) =>
     unwrap<{ category: Category }>(apiClient.put(`/admin/categories/${id}`, payload)),
+
+  checkDeletable: (id: string) => unwrap<CategoryDeletionCheck>(apiClient.get(`/admin/categories/${id}/deletion-check`)),
 
   remove: (id: string) => unwrap(apiClient.delete(`/admin/categories/${id}`)),
 };

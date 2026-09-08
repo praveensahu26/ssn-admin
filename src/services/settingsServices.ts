@@ -15,9 +15,6 @@ export interface AdminProfile {
 export interface UpdateProfilePayload {
   name?: string;
   bio?: string | null;
-  gender?: 'male' | 'female' | 'other' | 'prefer_not_to_say';
-  location?: string | null;
-  mobile?: string;
 }
 
 export interface AccountInfo {
