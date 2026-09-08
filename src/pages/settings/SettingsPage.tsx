@@ -5,7 +5,7 @@ import { Spinner } from '@/components/ui/spinner';
 import { SubmitButton } from '@/components/ui/SubmitButton';
 import { inputClass, labelClass } from '@/lib/formStyles';
 import { useAuthData } from '@/hooks/useAuthData';
-import { settingsServices, type AdminProfile, type AccountInfo, type UpdateProfilePayload } from '@/services/settingsServices';
+import { settingsServices, type AdminProfile, type AccountInfo } from '@/services/settingsServices';
 
 type SettingsTab = 'profile' | 'account';
 
@@ -19,7 +19,7 @@ const TABS: { id: SettingsTab; label: string }[] = [
 function EditProfileTab() {
   const { updateUser } = useAuthData();
   const [profile, setProfile] = useState<AdminProfile | null>(null);
-  const [form, setForm] = useState({ name: '', bio: '', gender: '', location: '', mobile: '' });
+  const [form, setForm] = useState({ name: '', bio: '' });
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
@@ -35,9 +35,6 @@ function EditProfileTab() {
         setForm({
           name: user.name || '',
           bio: user.bio || '',
-          gender: user.gender || '',
-          location: user.location || '',
-          mobile: user.mobile || '',
         });
       })
       .catch(() => {
@@ -59,9 +56,6 @@ function EditProfileTab() {
       const response = await settingsServices.updateProfile({
         name: form.name,
         bio: form.bio || null,
-        gender: (form.gender || undefined) as UpdateProfilePayload['gender'],
-        location: form.location || null,
-        mobile: form.mobile || undefined,
       });
       if (response.data) {
         setProfile(response.data.user);
@@ -114,39 +108,6 @@ function EditProfileTab() {
           rows={3}
           value={form.bio}
           onChange={(e) => setForm((f) => ({ ...f, bio: e.target.value }))}
-        />
-      </label>
-
-      <label className="flex flex-col">
-        <span className={labelClass}>Gender</span>
-        <select
-          className={inputClass}
-          value={form.gender}
-          onChange={(e) => setForm((f) => ({ ...f, gender: e.target.value }))}
-        >
-          <option value="">Prefer not to say</option>
-          <option value="male">Male</option>
-          <option value="female">Female</option>
-          <option value="other">Other</option>
-          <option value="prefer_not_to_say">Prefer not to say</option>
-        </select>
-      </label>
-
-      <label className="flex flex-col">
-        <span className={labelClass}>Location</span>
-        <input
-          className={inputClass}
-          value={form.location}
-          onChange={(e) => setForm((f) => ({ ...f, location: e.target.value }))}
-        />
-      </label>
-
-      <label className="flex flex-col">
-        <span className={labelClass}>Mobile</span>
-        <input
-          className={inputClass}
-          value={form.mobile}
-          onChange={(e) => setForm((f) => ({ ...f, mobile: e.target.value }))}
         />
       </label>
 
